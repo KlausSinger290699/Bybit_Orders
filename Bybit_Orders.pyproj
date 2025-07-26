@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Bybit_Orders.py</StartupFile>
+    <StartupFile>Scripts\trade_executor.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,7 +21,18 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Bybit_Orders.py" />
+    <Compile Include="Scripts\account_config.py" />
+    <Compile Include="Scripts\order_simulator.py" />
+    <Compile Include="Scripts\trade_executor.py" />
+    <Compile Include="Scripts\exchange_client.py" />
+    <Compile Include="Scripts\order_calculator.py" />
+    <Compile Include="Scripts\trade_executor_logic.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\.gitkeep" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Scripts\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
