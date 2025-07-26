@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\trade_executor.py</StartupFile>
+    <StartupFile>Scripts\main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -23,7 +23,7 @@
   <ItemGroup>
     <Compile Include="Scripts\account_config.py" />
     <Compile Include="Scripts\order_simulator.py" />
-    <Compile Include="Scripts\trade_executor.py" />
+    <Compile Include="Scripts\main.py" />
     <Compile Include="Scripts\exchange_client.py" />
     <Compile Include="Scripts\order_calculator.py" />
     <Compile Include="Scripts\trade_executor_logic.py" />
