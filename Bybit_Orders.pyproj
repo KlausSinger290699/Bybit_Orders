@@ -22,7 +22,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Scripts\account_config.py" />
-    <Compile Include="Scripts\order_simulator.py" />
     <Compile Include="Scripts\main.py" />
     <Compile Include="Scripts\real_bybit_client.py" />
     <Compile Include="Scripts\order_calculator.py" />
