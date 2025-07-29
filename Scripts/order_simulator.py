@@ -17,10 +17,12 @@ def run_simulation():
         print(f"Error: {e}")
         return
 
+    if not result["is_leverage_safe"]:
+        print(f"\n❌ ERROR: Leverage too high! Margin (${result['margin_required']}) "
+              f"doesn't support your stop loss (${result['risk_usdt']}).")
+        print(f"🛡️  Max safe leverage = {result['max_safe_leverage']}x")
+        return
+
     print(f"[SIMULATION] {result['direction'].upper()} {result['position_size']} BTC @ ${entry} (SL: ${stop})")
     print(f"Max loss: ${result['risk_usdt']} | Margin used: ${result['margin_required']} | "
           f"Notional: ${result['notional_value']} | Leverage: {result['leverage']}x")
-
-    if not result["is_leverage_safe"]:
-        print(f"\n⚠️  WARNING: Your leverage ({leverage}x) is too high!")
-        print(f"🛡️  Max safe leverage = {result['max_safe_leverage']}x to avoid liquidation before stop loss.")
