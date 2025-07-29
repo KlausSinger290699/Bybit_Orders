@@ -1,18 +1,26 @@
-from order_calculator import calculate_position_size
-
-def simulate_order(balance, risk_percent, leverage, entry_price, symbol="BTC/USDT", side="buy"):
-    amount = calculate_position_size(balance, risk_percent, leverage, entry_price)
-    cost = amount * entry_price
-    print(f"[SIMULATION] {side.upper()} {amount} {symbol} @ {entry_price} = ${cost:.2f} (Leverage: {leverage}x, Risk: {risk_percent}%)")
+﻿from order_calculator import calculate_position_sizing
 
 def run_simulation():
     try:
         balance = float(input("Enter USDT balance: "))
-        entry_price = float(input("Enter entry price: "))
+        entry = float(input("Enter entry price: "))
+        stop = float(input("Enter stop loss price: "))
         risk_percent = float(input("Enter risk %: "))
         leverage = float(input("Enter leverage: "))
     except ValueError:
         print("Invalid input.")
         return
 
-    simulate_order(balance, risk_percent, leverage, entry_price)
+    try:
+        result = calculate_position_sizing(entry, stop, balance, risk_percent, leverage)
+    except ValueError as e:
+        print(f"Error: {e}")
+        return
+
+    print(f"[SIMULATION] {result['direction'].upper()} {result['position_size']} BTC @ ${entry} (SL: ${stop})")
+    print(f"Max loss: ${result['risk_usdt']} | Margin used: ${result['margin_required']} | "
+          f"Notional: ${result['notional_value']} | Leverage: {result['leverage']}x")
+
+    if not result["is_leverage_safe"]:
+        print(f"\n⚠️  WARNING: Your leverage ({leverage}x) is too high!")
+        print(f"🛡️  Max safe leverage = {result['max_safe_leverage']}x to avoid liquidation before stop loss.")
