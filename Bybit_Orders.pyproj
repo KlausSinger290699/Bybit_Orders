@@ -24,9 +24,11 @@
     <Compile Include="Scripts\account_config.py" />
     <Compile Include="Scripts\order_simulator.py" />
     <Compile Include="Scripts\main.py" />
-    <Compile Include="Scripts\exchange_client.py" />
+    <Compile Include="Scripts\real_bybit_client.py" />
     <Compile Include="Scripts\order_calculator.py" />
-    <Compile Include="Scripts\trade_executor_logic.py" />
+    <Compile Include="Scripts\simulated_client.py" />
+    <Compile Include="Scripts\trade_executor.py" />
+    <Compile Include="Scripts\trade_interface.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
