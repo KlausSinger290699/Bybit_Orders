@@ -44,13 +44,13 @@ class BybitClient(ExchangeClient):
                                         amount=amount, params={"stop_loss": stop_price})
 
 class SimulatedClient(ExchangeClient):
-    def __init__(self, balance=10000):
-        self._balance = balance
-        self._symbol = "BTC/USDT"
+    def __init__(self, config):
+        self._symbol = config["symbol"]
         self._last_price = 50000
+        self._fake_balance = 10000
 
     def get_balance_usdt(self):
-        return self._balance
+        return self._fake_balance
 
     def get_market_price(self, symbol):
         return self._last_price

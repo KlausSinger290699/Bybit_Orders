@@ -12,19 +12,20 @@ def get_inputs():
         print("❌ Invalid input.")
         exit(1)
 
+def build_client(config, simulate_mode):
+    if simulate_mode:
+        return SimulatedClient(config)
+    else:
+        return BybitClient(config)
+
 if __name__ == "__main__":
     mode = input("Choose mode (simulate (1) / trade (2)): ").strip().lower()
-
-    if mode in ("simulate", "1"):
-        client = SimulatedClient(balance=10000)
-        symbol = "BTC/USDT"
-    elif mode in ("trade", "2"):
-        config = ACCOUNTS[0]  # Choose testnet or real here
-        client = BybitClient(config)
-        symbol = config["symbol"]
-    else:
-        print("Invalid mode.")
-        exit(1)
-
+    simulate_mode = mode in ("simulate", "1")
+    
     stop_loss_price, risk_percent, leverage = get_inputs()
-    execute_trade(client, symbol, stop_loss_price, risk_percent, leverage)
+
+    for config in ACCOUNTS:
+        print(f"\n--- Executing on account: {config['name']} ---")
+        client = build_client(config, simulate_mode)
+        symbol = config["symbol"]
+        execute_trade(client, symbol, stop_loss_price, risk_percent, leverage)
