@@ -23,6 +23,7 @@
   <ItemGroup>
     <Compile Include="Scripts\account_config.py" />
     <Compile Include="Scripts\exchange_client.py" />
+    <Compile Include="Scripts\input_handler.py" />
     <Compile Include="Scripts\main.py" />
     <Compile Include="Scripts\order_calculator.py" />
     <Compile Include="Scripts\trade_executor.py" />
