@@ -6,6 +6,7 @@ class ExchangeClient:
     def get_market_price(self, symbol): raise NotImplementedError
     def set_leverage(self, symbol, leverage): raise NotImplementedError
     def place_market_order(self, symbol, side, amount): raise NotImplementedError
+    def place_limit_order(self, symbol, side, price, amount): raise NotImplementedError
     def place_stop_loss(self, symbol, side, stop_price, amount): raise NotImplementedError
 
 class BybitClient(ExchangeClient):
@@ -36,6 +37,12 @@ class BybitClient(ExchangeClient):
 
     def place_market_order(self, symbol, side, amount):
         return self.client.create_order(symbol=symbol, type='market', side=side, amount=amount)
+
+    def place_limit_order(self, symbol, side, price, amount):
+        return self.client.create_order(
+        symbol=symbol, type='limit', side=side,
+        amount=amount, price=price, params={"time_in_force": "PostOnly"}
+        )
 
     def place_stop_loss(self, symbol, side, stop_price, amount):
         opposite = "sell" if side == "buy" else "buy"
@@ -76,6 +83,10 @@ class SimulatedClient(ExchangeClient):
         price = self.get_market_price(symbol)
         print(f"[SIM] Placed {side.upper()} order: {amount} {symbol} at {price}")
         return {"id": "SIMULATED_ORDER"}
+
+    def place_limit_order(self, symbol, side, price, amount):
+        print(f"[SIM] Placed LIMIT {side.upper()} order: {amount} {symbol} at ${price}")
+        return {"id": "SIMULATED_LIMIT_ORDER"}
 
     def place_stop_loss(self, symbol, side, stop_price, amount):
         print(f"[SIM] Set SL at ${stop_price} for {amount} {symbol}")

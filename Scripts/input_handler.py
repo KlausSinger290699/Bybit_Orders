@@ -1,5 +1,4 @@
-﻿# input_handler.py
-from trading_symbol import TradingSymbol
+﻿from enums import TradingSymbol, OrderType
 
 def choose_mode():
     mode = input("Choose mode (simulate (1) / trade (2)): ").strip().lower()
@@ -20,12 +19,27 @@ def choose_symbol():
         print("❌ Invalid selection.")
         exit(1)
 
-def get_trade_inputs():
+def choose_order_type():
+    print("Order types:")
+    for i, o in enumerate(OrderType, 1):
+        print(f"{i}. {o.value}")
+    choice = input("Choose order type by number: ").strip()
     try:
+        index = int(choice) - 1
+        return list(OrderType)[index]
+    except (ValueError, IndexError):
+        print("❌ Invalid selection.")
+        exit(1)
+
+def get_trade_inputs(order_type: OrderType):
+    try:
+        if order_type == OrderType.LIMIT:
+            entry_price = float(input("Enter limit entry price: "))
+        else: entry_price = None
         stop_loss_price = float(input("Enter stop loss price: "))
         risk_percent = float(input("Enter risk %: "))
         leverage = float(input("Enter leverage: "))
-        return stop_loss_price, risk_percent, leverage
+        return stop_loss_price, risk_percent, leverage, entry_price
     except ValueError:
         print("❌ Invalid input.")
         exit(1)

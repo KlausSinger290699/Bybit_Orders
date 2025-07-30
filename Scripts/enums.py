@@ -6,3 +6,7 @@ class TradingSymbol(str, Enum):
     SOL = "SOL/USDT"
     XRP = "XRP/USDT"
     DOGE = "DOGE/USDT"
+
+class OrderType(str, Enum):
+    MARKET = "market"
+    LIMIT = "limit"
