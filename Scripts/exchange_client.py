@@ -56,7 +56,7 @@ SIM_PRICES = {
     "XRP/USDT": 0.6,
     "DOGE/USDT": 0.1
 }
-DEFAULT_SIM_PRICE = 1000
+DEFAULT_SIM_PRICE = 10000
 
 class SimulatedClient(ExchangeClient):
     def __init__(self, config):
