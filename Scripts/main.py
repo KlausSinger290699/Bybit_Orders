@@ -36,6 +36,11 @@ if __name__ == "__main__":
     simulate_mode = mode in ("simulate", "1")    
     symbol = choose_symbol()
 
+    # Use first config just to preview the price (can be any, since all use same symbol logic)
+    preview_client = build_client(ACCOUNTS[0], simulate_mode)
+    current_price = preview_client.get_market_price(symbol)
+    print(f"\n📊 Current price for {symbol}: ${current_price}\n")
+
     stop_loss_price, risk_percent, leverage = get_inputs()
 
 for config in ACCOUNTS:
