@@ -19,7 +19,6 @@ class BybitClient(ExchangeClient):
         self.client.set_sandbox_mode(config["sandbox"])
         if config["sandbox"]:
             self.client.urls['api'] = self.client.urls['test']
-        self.symbol = config["symbol"]
 
     def get_balance_usdt(self):
         return self.client.fetch_balance()['total']['USDT']
@@ -44,26 +43,40 @@ class BybitClient(ExchangeClient):
                                         amount=amount, params={"stop_loss": stop_price})
 
 
+SIM_BALANCE_MAP = {
+    ("your_testnet_key", "your_testnet_secret"): 10000,
+    ("your_real_key", "your_real_secret"): 20000
+}
+DEFAULT_BALANCE = 10000
+
+SIM_PRICES = {
+    "BTC/USDT": 50000,
+    "ETH/USDT": 3000,
+    "SOL/USDT": 150,
+    "XRP/USDT": 0.6,
+    "DOGE/USDT": 0.1
+}
+DEFAULT_SIM_PRICE = 1000
+
 class SimulatedClient(ExchangeClient):
     def __init__(self, config):
-        self._symbol = config["symbol"]
-        self._last_price = 50000
-        self._fake_balance = 10000
+        key_pair = (config["apiKey"], config["secret"])
+        self._fake_balance = SIM_BALANCE_MAP.get(key_pair, DEFAULT_BALANCE)
 
     def get_balance_usdt(self):
         return self._fake_balance
 
     def get_market_price(self, symbol):
-        return self._last_price
+        return SIM_PRICES.get(symbol, DEFAULT_SIM_PRICE)
 
     def set_leverage(self, symbol, leverage):
         print(f"[SIM] Set leverage to {leverage}x")
 
     def place_market_order(self, symbol, side, amount):
-        print(f"[SIM] Placed {side.upper()} order: {amount} {symbol} at {self._last_price}")
+        price = self.get_market_price(symbol)
+        print(f"[SIM] Placed {side.upper()} order: {amount} {symbol} at {price}")
         return {"id": "SIMULATED_ORDER"}
 
     def place_stop_loss(self, symbol, side, stop_price, amount):
         print(f"[SIM] Set SL at ${stop_price} for {amount} {symbol}")
         return {"id": "SIMULATED_SL"}
-

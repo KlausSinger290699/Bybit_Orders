@@ -26,6 +26,7 @@
     <Compile Include="Scripts\main.py" />
     <Compile Include="Scripts\order_calculator.py" />
     <Compile Include="Scripts\trade_executor.py" />
+    <Compile Include="Scripts\trading_symbol.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
