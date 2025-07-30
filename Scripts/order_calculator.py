@@ -10,7 +10,6 @@ def calculate_position_sizing(entry_price, stop_loss_price, balance_usdt, risk_p
     position_size = risk_usdt / risk_per_unit
     notional_value = position_size * entry_price
     margin_required = notional_value / leverage
-
     max_safe_leverage = notional_value / risk_usdt
     is_leverage_safe = leverage <= max_safe_leverage
 
@@ -18,7 +17,6 @@ def calculate_position_sizing(entry_price, stop_loss_price, balance_usdt, risk_p
         "direction": direction,
         "position_size": round(position_size, 6),
         "risk_usdt": round(risk_usdt, 2),
-        "risk_per_unit": round(risk_per_unit, 2),
         "notional_value": round(notional_value, 2),
         "margin_required": round(margin_required, 2),
         "leverage": leverage,
