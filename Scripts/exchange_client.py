@@ -43,6 +43,7 @@ class BybitClient(ExchangeClient):
         return self.client.create_order(symbol=symbol, type='stop_market', side=opposite,
                                         amount=amount, params={"stop_loss": stop_price})
 
+
 class SimulatedClient(ExchangeClient):
     def __init__(self, config):
         self._symbol = config["symbol"]
@@ -59,9 +60,10 @@ class SimulatedClient(ExchangeClient):
         print(f"[SIM] Set leverage to {leverage}x")
 
     def place_market_order(self, symbol, side, amount):
-        print(f"[SIM] Placed {side.upper()} order: {amount} BTC at {self._last_price}")
+        print(f"[SIM] Placed {side.upper()} order: {amount} {symbol} at {self._last_price}")
         return {"id": "SIMULATED_ORDER"}
 
     def place_stop_loss(self, symbol, side, stop_price, amount):
-        print(f"[SIM] Set SL at ${stop_price} for {amount} BTC")
+        print(f"[SIM] Set SL at ${stop_price} for {amount} {symbol}")
         return {"id": "SIMULATED_SL"}
+
