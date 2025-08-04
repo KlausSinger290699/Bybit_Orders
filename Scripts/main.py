@@ -1,73 +1,62 @@
 from container import Container
 from input_handler import (
-    init_input_mode,
-    is_using_default_inputs,
-    get_selected_default_test,
-    choose_mode,
-    choose_symbol,
-    choose_order_type,
-    get_trade_inputs,
+    init_mode, is_default, get_default_test,
+    manual_mode, get_trade_inputs
 )
 from trade_executor import execute_trade
 from exchange_client import SimulatedClient, BybitClient
 from account_config import ACCOUNTS
 
 
-def collect_user_config():
-    if is_using_default_inputs():
-        test = get_selected_default_test()
-        return test["simulate_mode"], test["symbol"], test["order_type"], test
-    simulate_mode = choose_mode()
-    symbol = choose_symbol()
-    order_type = choose_order_type()
-    return simulate_mode, symbol, order_type, None
+def get_config():
+    if is_default():
+        t = get_default_test()
+        return t["simulate_mode"], t["symbol"], t["order_type"], t
+    mode, symbol, order_type = manual_mode()
+    return mode, symbol, order_type, None
 
 
-def display_trade_preview_info(symbol, simulate_mode):
-    preview_client = SimulatedClient(ACCOUNTS[0]) if simulate_mode else BybitClient(ACCOUNTS[0])
-    price = preview_client.get_market_price(symbol)
-    balance = preview_client.get_balance_usdt()
-    estimated_risk = round(balance * 0.01, 2)
-    print(f"\n💰 Account balance: ${balance:.2f}")
-    print(f"⚠️ Estimated 1% risk: ${estimated_risk:.2f}")
-    print(f"📊 Current price for {symbol}: ${price}")
+def preview(symbol, simulate):
+    client = SimulatedClient(ACCOUNTS[0]) if simulate else BybitClient(ACCOUNTS[0])
+    price = client.get_market_price(symbol)
+    bal = client.get_balance_usdt()
+    print(f"\n💰 Balance: ${bal:.2f}")
+    print(f"⚠️  1% Risk: ${round(bal * 0.01, 2)}")
+    print(f"📊 {symbol} Price: ${price}")
 
 
-def setup_container() -> Container:
-    simulate_mode, symbol, order_type, default_test = collect_user_config()
-    display_trade_preview_info(symbol, simulate_mode)
-    if default_test:
-        stop_loss_price = default_test["stop_loss_price"]
-        risk_percent = default_test["risk_percent"]
-        leverage = default_test["leverage"]
-        entry_price = default_test["entry_price"]
+def setup() -> Container:
+    mode, symbol, otype, preset = get_config()
+    preview(symbol, mode)
+    if preset:
+        sl, risk, lev, entry = (
+            preset["stop_loss_price"], preset["risk_percent"],
+            preset["leverage"], preset["entry_price"]
+        )
     else:
-        stop_loss_price, risk_percent, leverage, entry_price = get_trade_inputs(order_type)
-    container = Container()
-    container.config.simulate_mode.from_value(simulate_mode)
-    container.config.symbol.from_value(symbol)
-    container.config.order_type.from_value(order_type)
-    container.config.stop_loss_price.from_value(stop_loss_price)
-    container.config.risk_percent.from_value(risk_percent)
-    container.config.leverage.from_value(leverage)
-    container.config.entry_price.from_value(entry_price)
-    container.wire(modules=["trade_executor", "order_calculator"])
-    return container
+        sl, risk, lev, entry = get_trade_inputs(otype)
+
+    c = Container()
+    c.config.simulate_mode.from_value(mode)
+    c.config.symbol.from_value(symbol)
+    c.config.order_type.from_value(otype)
+    c.config.stop_loss_price.from_value(sl)
+    c.config.risk_percent.from_value(risk)
+    c.config.leverage.from_value(lev)
+    c.config.entry_price.from_value(entry)
+    c.wire(modules=["trade_executor", "order_calculator"])
+    return c
 
 
-def run_trades(container: Container):
-    config = container.trade_config()
+def run(container: Container):
+    cfg = container.trade_config()
     for acc in ACCOUNTS:
-        print(f"\n--- Executing on account: {acc['name']} ---")
-        client = SimulatedClient(acc) if config.simulate_mode else BybitClient(acc)
+        print(f"\n--- Executing on: {acc['name']} ---")
+        client = SimulatedClient(acc) if cfg.simulate_mode else BybitClient(acc)
         execute_trade(client)
 
 
 if __name__ == "__main__":
-    init_input_mode()
-    if is_using_default_inputs():
-        print("\n🧪 Running in DEFAULT TEST mode...\n")
-    else:
-        print("\n🧍 Running in MANUAL INPUT mode...\n")
-    container = setup_container()
-    run_trades(container)
+    init_mode()
+    print("\n🧪 Default Mode\n" if is_default() else "\n🎛️ Manual Mode\n")
+    run(setup())

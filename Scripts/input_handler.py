@@ -1,85 +1,45 @@
 ﻿from enums import TradingSymbol, OrderType
-
-ASK_FOR_DEFAULT_TEST_SELECTION = True
-USE_DEFAULT_INPUTS = False
-
-DEFAULT_TESTS = {
-    "quick_btc_market": {
-        "simulate_mode": True,
-        "symbol": TradingSymbol.BTC.value,
-        "order_type": OrderType.MARKET,
-        "entry_price": None,
-        "stop_loss_price": 46000.0,
-        "risk_percent": 1.0,
-        "leverage": 10.0
-    },
-    "eth_limit_test": {
-        "simulate_mode": True,
-        "symbol": TradingSymbol.ETH.value,
-        "order_type": OrderType.LIMIT,
-        "entry_price": 3100.0,
-        "stop_loss_price": 2900.0,
-        "risk_percent": 2.0,
-        "leverage": 5.0
-    }
-}
+from test_presets import TEST_PRESETS
 
 
-def init_input_mode():
-    global USE_DEFAULT_INPUTS
-    if not ASK_FOR_DEFAULT_TEST_SELECTION:
-        USE_DEFAULT_INPUTS = True
+ASK_FOR_DEFAULT = True
+USE_DEFAULT = False
+
+
+def init_mode():
+    global USE_DEFAULT
+    if not ASK_FOR_DEFAULT:
+        USE_DEFAULT = True
         return
-    print("Choose input mode:")
-    print("1. 🧪 Use default test config")
-    print("2. 🎛️  Enter values manually")
-    choice = input("Select mode: ").strip()
-    USE_DEFAULT_INPUTS = choice == "1"
+    print("1. 🧪 Use default test\n2. 🎛️ Manual input")
+    USE_DEFAULT = input("Select mode: ").strip() == "1"
 
 
-def get_selected_default_test():
+def is_default(): return USE_DEFAULT
+
+
+def get_default_test():
     print("🔧 Select default test:")
-    for i, key in enumerate(DEFAULT_TESTS, 1):
-        print(f"{i}. {key}")
-    idx = int(input("Enter number: ").strip()) - 1
-    return DEFAULT_TESTS[list(DEFAULT_TESTS)[idx]]
+    for i, name in enumerate(TEST_PRESETS, 1):
+        print(f"{i}. {name}")
+    idx = int(input("Enter number: ")) - 1
+    return TEST_PRESETS[list(TEST_PRESETS)[idx]]
 
 
-def is_using_default_inputs():
-    return USE_DEFAULT_INPUTS
-
-
-def choose_mode():
-    mode = input("Choose mode (simulate (1) / trade (2)): ").strip().lower()
-    if mode not in ("1", "2", "simulate", "trade"):
-        exit(1)
-    return mode in ("1", "simulate")
-
-
-def choose_symbol():
+def manual_mode():
+    simulate_mode = input("Simulate (1) / Trade (2): ").strip() in ("1", "simulate")
     print("Available symbols:")
-    for i, sym in enumerate(TradingSymbol, 1):
-        print(f"{i}. {sym.value}")
-    choice = input("Choose symbol by number: ").strip()
-    index = int(choice) - 1
-    return list(TradingSymbol)[index].value
-
-
-def choose_order_type():
+    for i, s in enumerate(TradingSymbol, 1): print(f"{i}. {s.value}")
+    symbol = list(TradingSymbol)[int(input("Symbol #: ")) - 1].value
     print("Order types:")
-    for i, o in enumerate(OrderType, 1):
-        print(f"{i}. {o.value}")
-    choice = input("Choose order type by number: ").strip()
-    index = int(choice) - 1
-    return list(OrderType)[index]
+    for i, o in enumerate(OrderType, 1): print(f"{i}. {o.value}")
+    order_type = list(OrderType)[int(input("Order type #: ")) - 1]
+    return simulate_mode, symbol, order_type
 
 
 def get_trade_inputs(order_type: OrderType):
-    if order_type == OrderType.LIMIT:
-        entry_price = float(input("Enter limit entry price: "))
-    else:
-        entry_price = None
-    stop_loss_price = float(input("Enter stop loss price: "))
-    risk_percent = float(input("Enter risk %: "))
-    leverage = float(input("Enter leverage: "))
-    return stop_loss_price, risk_percent, leverage, entry_price
+    entry = float(input("Limit entry price: ")) if order_type == OrderType.LIMIT else None
+    sl = float(input("Stop loss price: "))
+    risk = float(input("Risk %: "))
+    lev = float(input("Leverage: "))
+    return sl, risk, lev, entry

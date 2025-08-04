@@ -28,6 +28,7 @@
     <Compile Include="Scripts\main.py" />
     <Compile Include="Scripts\models.py" />
     <Compile Include="Scripts\order_calculator.py" />
+    <Compile Include="Scripts\test_presets.py" />
     <Compile Include="Scripts\trade_executor.py" />
     <Compile Include="Scripts\enums.py" />
   </ItemGroup>
