@@ -2,6 +2,7 @@ from exchange_client import SimulatedClient, BybitClient
 from trade_executor import execute_trade
 from account_config import ACCOUNTS
 from input_handler import choose_mode, choose_symbol, choose_order_type, get_trade_inputs
+from models import TradeConfig, TradeParams
 
 def build_client(config, simulate_mode):
     return SimulatedClient(config) if simulate_mode else BybitClient(config)
@@ -11,11 +12,11 @@ def preview_price(client, symbol):
     print(f"\n📊 Current price for {symbol}: ${price}\n")
     return price
 
-def run_trades(simulate_mode, symbol, stop_loss_price, risk_percent, leverage, order_type, entry_price):
-    for config in ACCOUNTS:
-        print(f"\n--- Executing on account: {config['name']} ---")
-        client = build_client(config, simulate_mode)
-        execute_trade(client, symbol, stop_loss_price, risk_percent, leverage, order_type, entry_price)
+def run_trades(config: TradeConfig, params: TradeParams):
+    for acc in ACCOUNTS:
+        print(f"\n--- Executing on account: {acc['name']} ---")
+        client = build_client(acc, config.simulate_mode)
+        execute_trade(client, config, params)
 
 
 if __name__ == "__main__":
@@ -23,8 +24,17 @@ if __name__ == "__main__":
     symbol = choose_symbol()
     order_type = choose_order_type()
 
-    preview_client = build_client(ACCOUNTS[0], simulate_mode)
-    preview_price(preview_client, symbol)
+    config = TradeConfig(simulate_mode=simulate_mode, symbol=symbol, order_type=order_type)
 
-    stop_loss_price, risk_percent, leverage, entry_price = get_trade_inputs(order_type)
-    run_trades(simulate_mode, symbol, stop_loss_price, risk_percent, leverage, order_type, entry_price)
+    preview_client = build_client(ACCOUNTS[0], config.simulate_mode)
+    preview_price(preview_client, config.symbol)
+
+    stop_loss_price, risk_percent, leverage, entry_price = get_trade_inputs(config.order_type)
+    params = TradeParams(
+        stop_loss_price=stop_loss_price,
+        risk_percent=risk_percent,
+        leverage=leverage,
+        entry_price=entry_price
+    )
+
+    run_trades(config, params)
