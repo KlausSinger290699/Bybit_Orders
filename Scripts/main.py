@@ -1,5 +1,12 @@
+from input_handler import (
+    USE_DEFAULT_INPUTS,
+    get_selected_default_test,
+    choose_mode,
+    choose_symbol,
+    choose_order_type,
+    get_trade_inputs
+)
 from container import Container
-from input_handler import choose_mode, choose_symbol, choose_order_type, get_trade_inputs
 from models import TradeConfig
 from trade_executor import execute_trade
 from exchange_client import SimulatedClient, BybitClient
@@ -7,22 +14,39 @@ from account_config import ACCOUNTS
 
 
 def collect_user_config():
-    simulate_mode = choose_mode()
-    symbol = choose_symbol()
-    order_type = choose_order_type()
-    return simulate_mode, symbol, order_type
+    if USE_DEFAULT_INPUTS:
+        test = get_selected_default_test()
+        return test["simulate_mode"], test["symbol"], test["order_type"], test
+    else:
+        simulate_mode = choose_mode()
+        symbol = choose_symbol()
+        order_type = choose_order_type()
+        return simulate_mode, symbol, order_type, None
 
 
-def preview_current_price(symbol, simulate_mode):
+def display_trade_preview_info(symbol, simulate_mode):
     preview_client = SimulatedClient(ACCOUNTS[0]) if simulate_mode else BybitClient(ACCOUNTS[0])
     price = preview_client.get_market_price(symbol)
-    print(f"\n📊 Current price for {symbol}: ${price}")
+    balance = preview_client.get_balance_usdt()
+    estimated_risk = round(balance * 0.01, 2)
+
+    print(f"\n💰 Account balance: ${balance:.2f}")
+    print(f"⚠️ Estimated 1% risk: ${estimated_risk:.2f}")
+    print(f"📊 Current price for {symbol}: ${price}")
 
 
 def setup_container() -> Container:
-    simulate_mode, symbol, order_type = collect_user_config()
-    preview_current_price(symbol, simulate_mode)
-    stop_loss_price, risk_percent, leverage, entry_price = get_trade_inputs(order_type)
+    simulate_mode, symbol, order_type, default_test = collect_user_config()
+
+    display_trade_preview_info(symbol, simulate_mode)
+
+    if default_test:
+        stop_loss_price = default_test["stop_loss_price"]
+        risk_percent = default_test["risk_percent"]
+        leverage = default_test["leverage"]
+        entry_price = default_test["entry_price"]
+    else:
+        stop_loss_price, risk_percent, leverage, entry_price = get_trade_inputs(order_type)
 
     container = Container()
     container.config.simulate_mode.from_value(simulate_mode)
@@ -45,5 +69,7 @@ def run_trades(container: Container):
 
 
 if __name__ == "__main__":
+    if USE_DEFAULT_INPUTS:
+        print("\n🧪 Running in DEFAULT TEST mode...\n")
     container = setup_container()
     run_trades(container)
