@@ -1,7 +1,7 @@
 ﻿from dependency_injector.wiring import inject, Provide
+from order_calculator import calculate_position_sizing
 from container import Container
 from enums import OrderType
-from order_calculator import calculate_position_sizing
 from models import TradeConfig, TradeParams
 
 @inject

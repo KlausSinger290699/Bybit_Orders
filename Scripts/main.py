@@ -1,20 +1,39 @@
-from dependency_injector.wiring import inject, Provide
 from container import Container
 from input_handler import choose_mode, choose_symbol, choose_order_type, get_trade_inputs
-from models import TradeConfig, TradeParams
+from models import TradeConfig
 from trade_executor import execute_trade
 from exchange_client import SimulatedClient, BybitClient
 from account_config import ACCOUNTS
 
 
-def build_client(config, simulate_mode):
-    return SimulatedClient(config) if simulate_mode else BybitClient(config)
+def collect_user_config():
+    simulate_mode = choose_mode()
+    symbol = choose_symbol()
+    order_type = choose_order_type()
+    return simulate_mode, symbol, order_type
 
 
-def preview_price(client, symbol):
-    price = client.get_market_price(symbol)
+def preview_current_price(symbol, simulate_mode):
+    preview_client = SimulatedClient(ACCOUNTS[0]) if simulate_mode else BybitClient(ACCOUNTS[0])
+    price = preview_client.get_market_price(symbol)
     print(f"\n📊 Current price for {symbol}: ${price}")
-    return price
+
+
+def setup_container() -> Container:
+    simulate_mode, symbol, order_type = collect_user_config()
+    preview_current_price(symbol, simulate_mode)
+    stop_loss_price, risk_percent, leverage, entry_price = get_trade_inputs(order_type)
+
+    container = Container()
+    container.config.simulate_mode.from_value(simulate_mode)
+    container.config.symbol.from_value(symbol)
+    container.config.order_type.from_value(order_type)
+    container.config.stop_loss_price.from_value(stop_loss_price)
+    container.config.risk_percent.from_value(risk_percent)
+    container.config.leverage.from_value(leverage)
+    container.config.entry_price.from_value(entry_price)
+    container.wire(modules=["trade_executor", "order_calculator"])
+    return container
 
 
 def run_trades(container: Container):
@@ -26,25 +45,5 @@ def run_trades(container: Container):
 
 
 if __name__ == "__main__":
-    container = Container()
-    container.wire(modules=["trade_executor", "order_calculator"])
-
-    simulate_mode = choose_mode()
-    symbol = choose_symbol()
-    order_type = choose_order_type()
-
-    config = TradeConfig(simulate_mode=simulate_mode, symbol=symbol, order_type=order_type)
-    container.config.simulate_mode.from_value(config.simulate_mode)
-    container.config.symbol.from_value(config.symbol)
-    container.config.order_type.from_value(config.order_type)
-
-    preview_client = build_client(ACCOUNTS[0], simulate_mode)
-    preview_price(preview_client, symbol)
-
-    stop_loss_price, risk_percent, leverage, entry_price = get_trade_inputs(order_type)
-    container.config.stop_loss_price.from_value(stop_loss_price)
-    container.config.risk_percent.from_value(risk_percent)
-    container.config.leverage.from_value(leverage)
-    container.config.entry_price.from_value(entry_price)
-
+    container = setup_container()
     run_trades(container)
