@@ -1,6 +1,17 @@
-def calculate_position_sizing(entry_price, stop_loss_price, balance_usdt, risk_percent, leverage):
+from models import TradeConfig, TradeParams
+
+def calculate_position_sizing(config: TradeConfig, params: TradeParams, balance_usdt: float):
+    entry_price = params.entry_price
+    stop_loss_price = params.stop_loss_price
+    leverage = params.leverage
+    risk_percent = params.risk_percent
+
+    if entry_price is None:
+        raise ValueError("Entry price must not be None.")
+
     if entry_price == stop_loss_price:
         raise ValueError("Entry and stop loss price cannot be the same.")
+
     if leverage <= 0:
         raise ValueError("Leverage must be greater than 0.")
 

@@ -3,18 +3,20 @@ from enums import OrderType
 from models import TradeConfig, TradeParams
 
 def execute_trade(client, config: TradeConfig, params: TradeParams):
+    # Fetch current market price
     market_price = client.get_market_price(config.symbol)
-    effective_entry = params.entry_price if config.order_type == OrderType.LIMIT else market_price
+
+    # Set entry price if it's a market order (we need it for sizing)
+    if config.order_type == OrderType.MARKET:
+        params.entry_price = market_price
+
+    # Validate entry price before sizing
+    if params.entry_price is None:
+        raise ValueError("Entry price must not be None.")
 
     balance = client.get_balance_usdt()
 
-    result = calculate_position_sizing(
-        entry_price=effective_entry,
-        stop_loss_price=params.stop_loss_price,
-        balance_usdt=balance,
-        risk_percent=params.risk_percent,
-        leverage=params.leverage
-    )
+    result = calculate_position_sizing(config, params, balance)
 
     if not result["is_leverage_safe"]:
         print(f"\n❌ ERROR: Leverage too high! Margin (${result['margin_required']}) "
@@ -25,7 +27,7 @@ def execute_trade(client, config: TradeConfig, params: TradeParams):
     client.set_leverage(config.symbol, params.leverage)
     side = "buy" if result["direction"] == "long" else "sell"
 
-    print(f"{result['direction'].upper()} {result['position_size']} {config.symbol} @ ${effective_entry} (SL: ${params.stop_loss_price})")
+    print(f"{result['direction'].upper()} {result['position_size']} {config.symbol} @ ${params.entry_price} (SL: ${params.stop_loss_price})")
     print(f"Max loss: ${result['risk_usdt']} | Margin used: ${result['margin_required']} | "
           f"Leverage: {result['leverage']}x")
 
