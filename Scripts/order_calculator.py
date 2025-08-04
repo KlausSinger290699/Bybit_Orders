@@ -1,6 +1,13 @@
+from dependency_injector.wiring import inject, Provide
+from container import Container
 from models import TradeConfig, TradeParams
 
-def calculate_position_sizing(config: TradeConfig, params: TradeParams, balance_usdt: float):
+@inject
+def calculate_position_sizing(
+    balance_usdt: float,
+    config: TradeConfig = Provide[Container.trade_config],
+    params: TradeParams = Provide[Container.trade_params],
+):
     entry_price = params.entry_price
     stop_loss_price = params.stop_loss_price
     leverage = params.leverage
@@ -8,10 +15,8 @@ def calculate_position_sizing(config: TradeConfig, params: TradeParams, balance_
 
     if entry_price is None:
         raise ValueError("Entry price must not be None.")
-
     if entry_price == stop_loss_price:
         raise ValueError("Entry and stop loss price cannot be the same.")
-
     if leverage <= 0:
         raise ValueError("Leverage must be greater than 0.")
 

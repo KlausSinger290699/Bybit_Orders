@@ -22,6 +22,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Scripts\account_config.py" />
+    <Compile Include="Scripts\container.py" />
     <Compile Include="Scripts\exchange_client.py" />
     <Compile Include="Scripts\input_handler.py" />
     <Compile Include="Scripts\main.py" />
