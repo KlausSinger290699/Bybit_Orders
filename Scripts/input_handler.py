@@ -1,9 +1,8 @@
 ﻿from enums import TradingSymbol, OrderType
 
-# Set this to False to use interactive/manual input
+ASK_FOR_DEFAULT_TEST_SELECTION = True
 USE_DEFAULT_INPUTS = False
 
-# Define your presets here
 DEFAULT_TESTS = {
     "quick_btc_market": {
         "simulate_mode": True,
@@ -26,23 +25,33 @@ DEFAULT_TESTS = {
 }
 
 
+def init_input_mode():
+    global USE_DEFAULT_INPUTS
+    if not ASK_FOR_DEFAULT_TEST_SELECTION:
+        USE_DEFAULT_INPUTS = True
+        return
+    print("Choose input mode:")
+    print("1. 🧪 Use default test config")
+    print("2. 🎛️  Enter values manually")
+    choice = input("Select mode: ").strip()
+    USE_DEFAULT_INPUTS = choice == "1"
+
+
 def get_selected_default_test():
     print("🔧 Select default test:")
     for i, key in enumerate(DEFAULT_TESTS, 1):
         print(f"{i}. {key}")
-    try:
-        idx = int(input("Enter number: ").strip()) - 1
-        return DEFAULT_TESTS[list(DEFAULT_TESTS)[idx]]
-    except (ValueError, IndexError):
-        print("❌ Invalid selection.")
-        exit(1)
+    idx = int(input("Enter number: ").strip()) - 1
+    return DEFAULT_TESTS[list(DEFAULT_TESTS)[idx]]
 
 
-# --- Only used when USE_DEFAULT_INPUTS = False ---
+def is_using_default_inputs():
+    return USE_DEFAULT_INPUTS
+
+
 def choose_mode():
     mode = input("Choose mode (simulate (1) / trade (2)): ").strip().lower()
     if mode not in ("1", "2", "simulate", "trade"):
-        print("❌ Invalid mode.")
         exit(1)
     return mode in ("1", "simulate")
 
@@ -52,12 +61,8 @@ def choose_symbol():
     for i, sym in enumerate(TradingSymbol, 1):
         print(f"{i}. {sym.value}")
     choice = input("Choose symbol by number: ").strip()
-    try:
-        index = int(choice) - 1
-        return list(TradingSymbol)[index].value
-    except (ValueError, IndexError):
-        print("❌ Invalid selection.")
-        exit(1)
+    index = int(choice) - 1
+    return list(TradingSymbol)[index].value
 
 
 def choose_order_type():
@@ -65,24 +70,16 @@ def choose_order_type():
     for i, o in enumerate(OrderType, 1):
         print(f"{i}. {o.value}")
     choice = input("Choose order type by number: ").strip()
-    try:
-        index = int(choice) - 1
-        return list(OrderType)[index]
-    except (ValueError, IndexError):
-        print("❌ Invalid selection.")
-        exit(1)
+    index = int(choice) - 1
+    return list(OrderType)[index]
 
 
 def get_trade_inputs(order_type: OrderType):
-    try:
-        if order_type == OrderType.LIMIT:
-            entry_price = float(input("Enter limit entry price: "))
-        else:
-            entry_price = None
-        stop_loss_price = float(input("Enter stop loss price: "))
-        risk_percent = float(input("Enter risk %: "))
-        leverage = float(input("Enter leverage: "))
-        return stop_loss_price, risk_percent, leverage, entry_price
-    except ValueError:
-        print("❌ Invalid input.")
-        exit(1)
+    if order_type == OrderType.LIMIT:
+        entry_price = float(input("Enter limit entry price: "))
+    else:
+        entry_price = None
+    stop_loss_price = float(input("Enter stop loss price: "))
+    risk_percent = float(input("Enter risk %: "))
+    leverage = float(input("Enter leverage: "))
+    return stop_loss_price, risk_percent, leverage, entry_price
