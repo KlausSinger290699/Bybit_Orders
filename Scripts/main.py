@@ -36,16 +36,16 @@ def setup() -> Container:
     else:
         sl, risk, lev, entry = get_trade_inputs(otype)
 
-    c = Container()
-    c.config.simulate_mode.from_value(mode)
-    c.config.symbol.from_value(symbol)
-    c.config.order_type.from_value(otype)
-    c.config.stop_loss_price.from_value(sl)
-    c.config.risk_percent.from_value(risk)
-    c.config.leverage.from_value(lev)
-    c.config.entry_price.from_value(entry)
-    c.wire(modules=["trade_executor", "order_calculator"])
-    return c
+    container = Container()
+    container.config.simulate_mode.from_value(mode)
+    container.config.symbol.from_value(symbol)
+    container.config.order_type.from_value(otype)
+    container.config.stop_loss_price.from_value(sl)
+    container.config.risk_percent.from_value(risk)
+    container.config.leverage.from_value(lev)
+    container.config.entry_price.from_value(entry)
+    container.wire(modules=["trade_executor", "order_calculator"])
+    return container
 
 
 def run(container: Container):
