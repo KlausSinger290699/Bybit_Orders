@@ -2,8 +2,8 @@
 from test_presets import TEST_PRESETS
 
 
-ASK_FOR_DEFAULT = True
-USE_DEFAULT = False
+ASK_FOR_DEFAULT = False
+USE_DEFAULT = True
 
 
 def init_mode():

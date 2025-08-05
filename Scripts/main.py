@@ -17,12 +17,28 @@ def get_config():
 
 
 def preview(symbol, simulate):
-    client = SimulatedClient(ACCOUNTS[0]) if simulate else BybitClient(ACCOUNTS[0])
-    price = client.get_market_price(symbol)
-    bal = client.get_balance_usdt()
-    print(f"\n💰 Balance: ${bal:.2f}")
-    print(f"⚠️  1% Risk: ${round(bal * 0.01, 2)}")
-    print(f"📊 {symbol} Price: ${price}")
+    rows = []
+    for acc in ACCOUNTS:
+        client = SimulatedClient(acc) if simulate else BybitClient(acc)
+        name = acc["name"]
+        balance = client.get_balance_usdt()
+        risk = round(balance * 0.01, 2)
+        rows.append((name, balance, risk))
+
+    price_client = SimulatedClient(ACCOUNTS[0]) if simulate else BybitClient(ACCOUNTS[0])
+    price = price_client.get_market_price(symbol)
+
+    print("\n═══════════════════════════════════════════════")
+    print("📊  ACCOUNT OVERVIEW")
+    print("═══════════════════════════════════════════════")
+
+    for name, balance, risk in rows:
+        print(f"💼 {name:<15} | 💰 Balance: ${balance:>9,.2f} | ⚠️  1% Risk: ${risk:>7,.2f}")
+
+    print("───────────────────────────────────────────────")
+    print(f"📈 {symbol} Price: ${price}")
+    print("═══════════════════════════════════════════════")
+
 
 
 def setup() -> Container:

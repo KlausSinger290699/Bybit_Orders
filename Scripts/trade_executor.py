@@ -28,8 +28,11 @@ def execute_trade(
     client.set_leverage(config.symbol, params.leverage)
     side = "buy" if result["direction"] == "long" else "sell"
 
-    print(f"{result['direction'].upper()} {result['position_size']} {config.symbol} @ ${params.entry_price} (SL: ${params.stop_loss_price})")
-    print(f"Max loss: ${result['risk_usdt']} | Margin used: ${result['margin_required']} | Leverage: {result['leverage']}x")
+    print(f"📈 {result['direction'].upper()} {result['position_size']} {config.symbol} @ ${params.entry_price} (SL: ${params.stop_loss_price})")
+    print(f"💰 Balance     : ${balance:,.2f}")
+    print(f"🔻 Max loss    : ${result['risk_usdt']:,.2f}")
+    print(f"🧮 Margin used : ${result['margin_required']:,.2f}")
+    print(f"⚙️  Leverage    : {result['leverage']}x")
 
     if config.order_type == OrderType.MARKET:
         client.place_market_order(config.symbol, side, result["position_size"])
@@ -38,9 +41,3 @@ def execute_trade(
 
     client.place_stop_loss(config.symbol, side, params.stop_loss_price, result["position_size"])
     print("✅ Trade executed.")
-
-
-    # confirm = input("Confirm order? (y/n): ").strip().lower()
-    # if confirm != "y":
-    #     print("❌ Order cancelled.")
-    #     return
