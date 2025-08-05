@@ -1,5 +1,15 @@
 from enums import TradingSymbol, OrderType
 
+DEFAULT_TEST_CONFIG = {
+    "simulate_mode": True,
+    "symbol": TradingSymbol.BTC.value,
+    "order_type": OrderType.MARKET,
+    "entry_price": None,
+    "stop_loss_price": 46000.0,
+    "risk_percent": 1.0,
+    "leverage": 10.0
+}
+
 TEST_PRESETS = {
     "quick_btc_market": {
         "simulate_mode": True,

@@ -28,7 +28,7 @@ def preview(symbol, simulate):
     price_client = SimulatedClient(ACCOUNTS[0]) if simulate else BybitClient(ACCOUNTS[0])
     price = price_client.get_market_price(symbol)
 
-    print("\n═══════════════════════════════════════════════")
+    print("═══════════════════════════════════════════════")
     print("📊  ACCOUNT OVERVIEW")
     print("═══════════════════════════════════════════════")
 
@@ -74,5 +74,5 @@ def run(container: Container):
 
 if __name__ == "__main__":
     init_mode()
-    print("\n🧪 Default Mode\n" if is_default() else "\n🎛️ Manual Mode\n")
+    print("🧪 Default Mode\n" if is_default() else "🎛️ Manual Mode\n")
     run(setup())

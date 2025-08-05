@@ -1,15 +1,17 @@
 ﻿from enums import TradingSymbol, OrderType
-from test_presets import TEST_PRESETS
+from test_presets import TEST_PRESETS, DEFAULT_TEST_CONFIG
 
-ASK_FOR_DEFAULT = True
-USE_DEFAULT = True
+ASK_FOR_DEFAULT = False
+USE_DEFAULT = True             # irrelevant when ASK_FOR_DEFAULT = True
+SKIP_TEST_SELECTION = True
 
 
 def init_mode():
     global USE_DEFAULT
+
     if not ASK_FOR_DEFAULT:
-        USE_DEFAULT = True
         return
+
     print("═══════════════════════════════════════════════")
     print("📥 INPUT MODE SELECTION")
     print("═══════════════════════════════════════════════")
@@ -24,7 +26,10 @@ def is_default():
 
 
 def get_default_test():
-    print("\n🔧 Select default test:")
+    if SKIP_TEST_SELECTION:
+        return DEFAULT_TEST_CONFIG
+
+    print("🔧 Select default test:")
     for i, name in enumerate(TEST_PRESETS, 1):
         print(f"{i}. {name}")
     idx = int(input("Enter number: ").strip()) - 1

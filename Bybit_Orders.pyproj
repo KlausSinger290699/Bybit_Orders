@@ -11,6 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>Bybit_Orders</Name>
     <RootNamespace>Bybit_Orders</RootNamespace>
+    <SuppressConfigureTestFrameworkPrompt>true</SuppressConfigureTestFrameworkPrompt>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
