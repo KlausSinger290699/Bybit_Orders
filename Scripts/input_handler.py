@@ -1,7 +1,7 @@
 ﻿from enums import TradingSymbol, OrderType
 from test_presets import TEST_PRESETS, DEFAULT_TEST_CONFIG
 
-ASK_FOR_DEFAULT = False
+ASK_FOR_DEFAULT = True
 USE_DEFAULT = True             # irrelevant when ASK_FOR_DEFAULT = True
 SKIP_TEST_SELECTION = True
 

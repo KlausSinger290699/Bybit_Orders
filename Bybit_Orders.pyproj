@@ -27,6 +27,7 @@
     <Compile Include="Scripts\exchange_client.py" />
     <Compile Include="Scripts\input_handler.py" />
     <Compile Include="Scripts\main.py" />
+    <Compile Include="Scripts\main_test.py" />
     <Compile Include="Scripts\models.py" />
     <Compile Include="Scripts\order_calculator.py" />
     <Compile Include="Scripts\test_presets.py" />

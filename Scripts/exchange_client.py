@@ -51,19 +51,19 @@ class BybitClient(ExchangeClient):
 
 
 SIM_BALANCE_MAP = {
-    ("your_testnet_key", "your_testnet_secret"): 10000,
-    ("your_real_key", "your_real_secret"): 20000
+    ("your_testnet_key", "your_testnet_secret"): 100000,
+    ("your_real_key", "your_real_secret"): 200000
 }
-DEFAULT_BALANCE = 10000
+DEFAULT_BALANCE = 100000
 
 SIM_PRICES = {
-    "BTC/USDT": 50000,
+    "BTC/USDT": 120000,
     "ETH/USDT": 3000,
     "SOL/USDT": 150,
     "XRP/USDT": 0.6,
     "DOGE/USDT": 0.1
 }
-DEFAULT_SIM_PRICE = 10000
+DEFAULT_SIM_PRICE = 100000
 
 class SimulatedClient(ExchangeClient):
     def __init__(self, config):
