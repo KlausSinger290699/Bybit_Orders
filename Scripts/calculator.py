@@ -1,8 +1,9 @@
 ﻿from order_calculator import calculate_position_sizing
 from models import TradeConfig, TradeParams
 from enums import OrderType
+import pyperclip
 
-DEFAULT_BALANCE_USDT = 100000
+DEFAULT_BALANCE_USDT = 200000
 ALLOW_CUSTOM_BALANCE = False
 FORCE_LIMIT_ORDER = True
 
@@ -43,19 +44,30 @@ def print_header(balance):
     print(f"──────────────────────────────────────────────")
 
 
-def print_result(result):
+def print_result(result, balance):
+    margin = result['margin_required']
+    risk = result['risk_usdt']
+
     print(f"\n📊 Calculation Result")
     print(f"──────────────────────────────────────────────")
-    print(f"🔒 Margin Required   : ${result['margin_required']}")
-    print(f"⚠️  Risk Amount       : ${result['risk_usdt']}")
+    print(f"🔒 Margin Required   : ${margin}")
+    print(f"⚠️  Risk Amount       : ${risk}")
     print(f"──────────────────────────────────────────────")
+
+    if margin > balance:
+        print(f"❌ ERROR: Margin required (${margin}) exceeds your balance (${balance})")
+        print(f"🛑 Trade cannot be executed with current leverage and stop loss.")
+        print(f"📋 Nothing was copied to clipboard.")
+    else:
+        pyperclip.copy(str(margin))
+        print(f"📋 Copied margin required to clipboard: {margin}")
 
 
 def main():
     balance = get_balance()
     print_header(balance)
-    order_type, entry = get_entry_price()
     stop, lev, risk = get_inputs()
+    order_type, entry = get_entry_price()
 
     config = TradeConfig(True, f"{ASSET_NAME}USDT", order_type)
     params = TradeParams(
@@ -66,7 +78,7 @@ def main():
     )
 
     result = calculate_position_sizing(balance, config=config, params=params)
-    print_result(result)
+    print_result(result, balance)
 
 
 if __name__ == "__main__":
