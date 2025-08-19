@@ -12,43 +12,69 @@ class ExchangeClient:
 class BybitClient(ExchangeClient):
     def __init__(self, config):
         self.client = ccxt.bybit({
-            'apiKey': config["apiKey"],
-            'secret': config["secret"],
-            'enableRateLimit': True,
-            'options': {'defaultType': 'linear'}
+            "apiKey": config["apiKey"],
+            "secret": config["secret"],
+            "enableRateLimit": True,
         })
-        self.client.set_sandbox_mode(config["sandbox"])
-        if config["sandbox"]:
-            self.client.urls['api'] = self.client.urls['test']
+
+        if config.get("sandbox"):
+            if hasattr(self.client, "enable_demo_trading"):
+                self.client.enable_demo_trading(True)
+            else:
+                self.client.set_sandbox_mode(True)
+                if "test" in self.client.urls:
+                    self.client.urls["api"] = self.client.urls["test"]
+
+        self.client.options["defaultType"] = "future"
+        self.client.load_markets()
 
     def get_balance_usdt(self):
-        return self.client.fetch_balance()['total']['USDT']
+        bal = self.client.fetch_balance()
+        if "total" in bal and isinstance(bal["total"], dict):
+            return bal["total"].get("USDT", 0)
+        if "USDT" in bal and isinstance(bal["USDT"], dict):
+            return bal["USDT"].get("total", 0)
+        return 0
 
     def get_market_price(self, symbol):
-        return self.client.fetch_ticker(symbol)['last']
+        return self.client.fetch_ticker(symbol)["last"]
 
     def set_leverage(self, symbol, leverage):
-        market = self.client.market(symbol)
-        self.client.private_linear_post_position_set_leverage({
-            "symbol": market["id"],
-            "buy_leverage": leverage,
-            "sell_leverage": leverage
-        })
+        try:
+            return self.client.set_leverage(leverage, symbol)
+        except Exception:
+            m = self.client.market(symbol)
+            try:
+                return self.client.privatePostV5PositionSetLeverage({
+                    "category": "linear",
+                    "symbol": m["id"],
+                    "buyLeverage": str(leverage),
+                    "sellLeverage": str(leverage),
+                })
+            except Exception:
+                return self.client.privateLinearPostPositionSetLeverage({
+                    "symbol": m["id"],
+                    "buy_leverage": leverage,
+                    "sell_leverage": leverage,
+                })
 
     def place_market_order(self, symbol, side, amount):
-        return self.client.create_order(symbol=symbol, type='market', side=side, amount=amount)
+        return self.client.create_order(symbol=symbol, type="market", side=side, amount=amount)
 
     def place_limit_order(self, symbol, side, price, amount):
-        return self.client.create_order(
-        symbol=symbol, type='limit', side=side,
-        amount=amount, price=price, params={"time_in_force": "PostOnly"}
-        )
+        try:
+            return self.client.create_order(symbol, "limit", side, amount, price, {"postOnly": True})
+        except Exception:
+            return self.client.create_order(symbol, "limit", side, amount, price, {"timeInForce": "PostOnly"})
 
     def place_stop_loss(self, symbol, side, stop_price, amount):
         opposite = "sell" if side == "buy" else "buy"
-        return self.client.create_order(symbol=symbol, type='stop_market', side=opposite,
-                                        amount=amount, params={"stop_loss": stop_price})
-
+        try:
+            return self.client.create_order(symbol, "market", opposite, amount, None,
+                                            {"reduceOnly": True, "triggerPrice": stop_price})
+        except Exception:
+            return self.client.create_order(symbol, "market", opposite, amount, None,
+                                            {"reduceOnly": True, "stopPrice": stop_price})
 
 SIM_BALANCE_MAP = {
     ("your_testnet_key", "your_testnet_secret"): 100000,
