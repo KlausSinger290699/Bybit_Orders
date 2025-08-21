@@ -28,11 +28,10 @@ def test_market_price():
 
 def test_market_order():
     amount = exchange.amount_to_precision(SYMBOL, 0.1)
-    out = exchange.create_order(
-        SYMBOL, "market", "buy", amount, None,
-        {"positionIdx": 1}  # hedge mode → long side
-    )
-    print("Market order result:", out)
+    exchange.create_order(SYMBOL, "market", "buy", amount, None, {"positionIdx": 1})
+    rough = exchange.fetch_ticker(SYMBOL)["last"]
+    print(f"Market fill ~ {exchange.price_to_precision(SYMBOL, rough)}")
+
 
 def test_limit_order():
     last = exchange.fetch_ticker(SYMBOL)["last"]
