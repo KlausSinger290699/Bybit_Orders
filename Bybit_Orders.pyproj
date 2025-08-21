@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\main_client_tests.py</StartupFile>
+    <StartupFile>Scripts\Tests\main_client_tests.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -28,9 +28,10 @@
     <Compile Include="Scripts\exchange_client.py" />
     <Compile Include="Scripts\input_handler.py" />
     <Compile Include="Scripts\main.py" />
-    <Compile Include="Scripts\main_client_standalone_tests.py" />
-    <Compile Include="Scripts\main_client_tests.py" />
-    <Compile Include="Scripts\main_test.py" />
+    <Compile Include="Scripts\Tests\main_client_standalone_tests.py" />
+    <Compile Include="Scripts\Tests\main_client_automatic_tests.py" />
+    <Compile Include="Scripts\Tests\main_client_tests.py" />
+    <Compile Include="Scripts\Tests\main_test.py" />
     <Compile Include="Scripts\models.py" />
     <Compile Include="Scripts\order_calculator.py" />
     <Compile Include="Scripts\test_presets.py" />
@@ -39,9 +40,11 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
+    <Content Include="Scripts\Tests\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Scripts\" />
+    <Folder Include="Scripts\Tests\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

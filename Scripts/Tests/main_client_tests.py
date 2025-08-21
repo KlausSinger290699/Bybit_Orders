@@ -10,7 +10,7 @@ exchange = ccxt.bybit({
     "secret": API_SECRET,
     "enableRateLimit": True,
 })
-exchange.set_sandbox_mode(True)
+exchange.enable_demo_trading(True)
 exchange.options["defaultType"] = "future"
 exchange.load_markets()
 

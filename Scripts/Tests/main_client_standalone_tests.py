@@ -22,7 +22,7 @@ def mk_client():
         "enableRateLimit": True,
         "options": {"defaultType": "linear"},
     })
-    ex.set_sandbox_mode(True)
+    ex.enable_demo_trading(True)
     ex.load_markets()
     return ex
 
