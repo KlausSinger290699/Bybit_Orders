@@ -2,11 +2,11 @@ from exchange_client import BybitClient
 
 # ===== config =====
 CONFIG = {
-    "apiKey": "x6d9o7hQVoR1R9MQja",
-    "secret": "Rj145VpvkogrSgnhSf7KGUdJr9Cdscw2vv7t",
+    "apiKey": "JVyNFG6yyMvD7zucnP",
+    "secret": "9dOWIBweh9EZKCnll6Pc1CSUaJ9xs9CStzSo",
     "sandbox": True,
 }
-SYMBOL = "BTC/USDT:USDT"
+SYMBOL = "RUNE/USDT:USDT"
 TEST_LEVERAGE = 2
 TEST_AMOUNT = 0.001
 

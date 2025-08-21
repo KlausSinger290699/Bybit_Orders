@@ -1,7 +1,7 @@
 ﻿import ccxt 
 
-API_KEY = "x6d9o7hQVoR1R9MQja"
-API_SECRET = "Rj145VpvkogrSgnhSf7KGUdJr9Cdscw2vv7t"
+API_KEY = "JVyNFG6yyMvD7zucnP"
+API_SECRET = "9dOWIBweh9EZKCnll6Pc1CSUaJ9xs9CStzSo"
 
 exchange_id = 'bybit'
 exchange_class = getattr(ccxt, exchange_id)
