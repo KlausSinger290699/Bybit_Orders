@@ -37,22 +37,30 @@ def test_market_order():
 def test_limit_order():
     last = exchange.fetch_ticker(SYMBOL)["last"]
     amount = exchange.amount_to_precision(SYMBOL, 0.1)
-    price  = exchange.price_to_precision(SYMBOL, last * 0.95)
-    out = exchange.create_order(
+    target  = last * 0.95
+    price   = exchange.price_to_precision(SYMBOL, target)
+
+    # hedge mode (long side)
+    exchange.create_order(
         SYMBOL, "limit", "buy", amount, price,
-        {"postOnly": True, "positionIdx": 1}  # hedge mode → long side
+        {"postOnly": True, "positionIdx": 1}
     )
-    print("Limit order result:", out)
+
+    pct = ((float(price) - last) / last) * 100
+    print(f"Limit @ {price} ({pct:+.2f}%)")
+
 
 def test_stop_loss():
-    last = exchange.fetch_ticker(SYMBOL)["last"]
+    last   = exchange.fetch_ticker(SYMBOL)["last"]
     amount = exchange.amount_to_precision(SYMBOL, 0.1)
     stop   = exchange.price_to_precision(SYMBOL, last * 0.95)
-    out = exchange.create_order(
+
+    exchange.create_order(
         SYMBOL, "market", "sell", amount, None,
-        {"reduceOnly": True, "stopPrice": stop, "positionIdx": 1}  # close long
+        {"reduceOnly": True, "stopPrice": stop, "triggerDirection": "descending", "positionIdx": 1}
     )
-    print("Stop-loss order result:", out)
+    print(f"Stop-loss @ {stop}")
+
 
 
 def test_set_leverage():
