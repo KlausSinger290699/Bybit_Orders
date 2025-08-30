@@ -1,8 +1,8 @@
 ACCOUNTS = [
     {
         "name": "Bybit-Testnet",
-        "apiKey": "VHcc1JgseUq3E4KdqZ", #VHcc1JgseUq3E4KdqZ   "your_testnet_key"
-        "secret": "WgAjjwuJs7WTvazKetmNFHCfUDVgBVfW8S1C", #WgAjjwuJs7WTvazKetmNFHCfUDVgBVfW8S1C  #your_testnet_secret
+        "apiKey": "JVyNFG6yyMvD7zucnP", #"your_testnet_key"
+        "secret": "9dOWIBweh9EZKCnll6Pc1CSUaJ9xs9CStzSo", #your_testnet_secret
         "sandbox": True,
     },
     # {
