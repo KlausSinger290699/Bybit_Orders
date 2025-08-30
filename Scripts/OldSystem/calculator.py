@@ -4,7 +4,7 @@ from enums import OrderType
 import pyperclip
 
 DEFAULT_BALANCE_USDT = 200000
-ALLOW_CUSTOM_BALANCE = True
+ALLOW_CUSTOM_BALANCE = False
 FORCE_LIMIT_ORDER = True
 
 ASSET_NAME = "BTC"
