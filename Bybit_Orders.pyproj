@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\main.py</StartupFile>
+    <StartupFile>Scripts\Functioning_Tests\calculator.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,28 +22,40 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Scripts\account_config.py" />
-    <Compile Include="Scripts\calculator.py" />
-    <Compile Include="Scripts\container.py" />
-    <Compile Include="Scripts\exchange_client.py" />
-    <Compile Include="Scripts\input_handler.py" />
-    <Compile Include="Scripts\main.py" />
+    <Compile Include="Scripts\Functioning_Tests\container.py" />
+    <Compile Include="Scripts\Functioning_Tests\enums.py" />
+    <Compile Include="Scripts\Functioning_Tests\models.py" />
+    <Compile Include="Scripts\Functioning_Tests\order_calculator.py" />
+    <Compile Include="Scripts\OldSystem\account_config.py" />
+    <Compile Include="Scripts\Functioning_Tests\calculator.py" />
+    <Compile Include="Scripts\OldSystem\calculator.py" />
+    <Compile Include="Scripts\OldSystem\container.py" />
+    <Compile Include="Scripts\OldSystem\exchange_client.py" />
+    <Compile Include="Scripts\OldSystem\input_handler.py" />
+    <Compile Include="Scripts\OldSystem\main.py" />
+    <Compile Include="Scripts\OldSystem\main_client_tests.py" />
     <Compile Include="Scripts\Tests\main_client_standalone_tests.py" />
     <Compile Include="Scripts\Tests\main_client_automatic_tests.py" />
-    <Compile Include="Scripts\Tests\main_client_tests.py" />
+    <Compile Include="Scripts\Functioning_Tests\main_client_tests.py" />
     <Compile Include="Scripts\Tests\main_test.py" />
-    <Compile Include="Scripts\models.py" />
-    <Compile Include="Scripts\order_calculator.py" />
-    <Compile Include="Scripts\test_presets.py" />
-    <Compile Include="Scripts\trade_executor.py" />
-    <Compile Include="Scripts\enums.py" />
+    <Compile Include="Scripts\OldSystem\models.py" />
+    <Compile Include="Scripts\OldSystem\order_calculator.py" />
+    <Compile Include="Scripts\OldSystem\test_presets.py" />
+    <Compile Include="Scripts\OldSystem\trade_executor.py" />
+    <Compile Include="Scripts\OldSystem\enums.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
+    <Content Include="Scripts\Functioning_Tests\.gitkeep" />
+    <Content Include="Scripts\NewSystem\.gitkeep" />
+    <Content Include="Scripts\OldSystem\.gitkeep" />
     <Content Include="Scripts\Tests\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Scripts\" />
+    <Folder Include="Scripts\Functioning_Tests\" />
+    <Folder Include="Scripts\NewSystem\" />
+    <Folder Include="Scripts\OldSystem\" />
     <Folder Include="Scripts\Tests\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
