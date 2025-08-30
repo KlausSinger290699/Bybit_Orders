@@ -2,7 +2,6 @@ from dependency_injector import containers, providers
 from models import TradeConfig, TradeParams
 
 class Container(containers.DeclarativeContainer):
-
     config = providers.Configuration()
 
     trade_config = providers.Singleton(
@@ -19,3 +18,26 @@ class Container(containers.DeclarativeContainer):
         leverage=config.leverage,
         entry_price=config.entry_price,
     )
+
+def wire_for(config_obj: TradeConfig, params_obj: TradeParams, *, modules: list):
+    """
+    Build a container, feed values, wire the given modules that use @inject/Provide.
+    Returns the container (in case you want to reuse or unwire in long-lived apps).
+    """
+    container = Container()
+    container.config.from_dict({
+        "simulate_mode":   config_obj.simulate_mode,
+        "symbol":          config_obj.symbol,
+        "order_type":      config_obj.order_type,
+        "stop_loss_price": params_obj.stop_loss_price,
+        "risk_percent":    params_obj.risk_percent,
+        "leverage":        params_obj.leverage,
+        "entry_price":     params_obj.entry_price,
+    })
+    container.wire(modules=modules)
+    return container
+
+def unwire(container: Container | None):
+    """Optional: useful only if you plan to re-wire the same modules repeatedly (e.g., Unity)."""
+    if container:
+        container.unwire()

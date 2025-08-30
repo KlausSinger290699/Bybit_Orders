@@ -1,6 +1,8 @@
-﻿from order_calculator import calculate_position_sizing
+﻿import order_calculator
+from order_calculator import calculate_position_sizing
 from models import TradeConfig, TradeParams
 from enums import OrderType
+from container import wire_for
 import pyperclip
 
 DEFAULT_BALANCE_USDT = 200000
@@ -77,9 +79,9 @@ def main():
         entry_price=entry
     )
 
-    result = calculate_position_sizing(balance, config=config, params=params)
+    wire_for(config, params, modules=[order_calculator])
+    result = calculate_position_sizing(balance)
     print_result(result, balance)
-
 
 if __name__ == "__main__":
     main()
