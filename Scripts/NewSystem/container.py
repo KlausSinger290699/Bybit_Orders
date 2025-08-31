@@ -20,8 +20,8 @@ class Container(containers.DeclarativeContainer):
     )
 
 def wire_for(config_obj: TradeConfig, params_obj: TradeParams, *, modules: list):
-    container = Container()
-    container.config.from_dict({
+    c = Container()
+    c.config.from_dict({
         "simulate_mode":   config_obj.simulate_mode,
         "symbol":          config_obj.symbol,
         "order_type":      config_obj.order_type,
@@ -30,5 +30,5 @@ def wire_for(config_obj: TradeConfig, params_obj: TradeParams, *, modules: list)
         "leverage":        params_obj.leverage,
         "entry_price":     params_obj.entry_price,
     })
-    container.wire(modules=modules)
-    return container
+    c.wire(modules=modules)
+    return c

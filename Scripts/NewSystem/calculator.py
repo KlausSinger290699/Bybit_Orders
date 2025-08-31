@@ -1,7 +1,7 @@
-﻿# calculator.py
-import order_calculator
+﻿import order_calculator
+import exchange_client as exchange_client_module
 from order_calculator import calculate_position_sizing
-from models import TradeConfig, TradeParams, OrderPlan
+from models import TradeConfig, TradeParams
 from enums import OrderType
 from container import wire_for
 from exchange_client import ExchangeClient, DEMO_TRADING
@@ -60,9 +60,10 @@ def main():
 
     symbol_full = client.symbol_for(base)
 
-    config = TradeConfig(simulate_mode=DEMO_TRADING, symbol=symbol_full, order_type=order_type)
+    trade  = TradeConfig(simulate_mode=DEMO_TRADING, symbol=symbol_full, order_type=order_type)
     params = TradeParams(stop_loss_price=stop, risk_percent=risk, leverage=lev, entry_price=entry)
-    wire_for(config, params, modules=[order_calculator])
+
+    wire_for(trade, params, modules=[order_calculator, exchange_client_module])
 
     result = calculate_position_sizing(balance)
     ok = print_result_simple(result, balance)
@@ -73,21 +74,17 @@ def main():
     if not send:
         return
 
-    side = "buy" if result["direction"] == "long" else "sell"
+    side   = "buy" if result["direction"] == "long" else "sell"
     amount = result["position_size"]
 
-    plan = OrderPlan(
-        symbol=symbol_full,
-        order_type=order_type,
+    client.apply_leverage(lev)
+    resp = client.place_order_with_stop(
         side=side,
         amount=amount,
-        stop_loss_price=stop,
+        order_type=order_type,
         entry_price=entry if order_type == OrderType.LIMIT else None,
-        leverage=lev,
+        stop_loss_price=stop,
     )
-
-    client.apply_leverage(plan)
-    resp = client.place_order_with_stop(plan)
     print("✅ Order placed:", resp.get("id", resp))
 
 if __name__ == "__main__":
