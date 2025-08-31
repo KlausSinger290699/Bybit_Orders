@@ -3,12 +3,10 @@ from order_calculator import calculate_position_sizing
 from models import TradeConfig, TradeParams
 from enums import OrderType
 from container import wire_for
-from exchange_client import ExchangeClient
+from exchange_client import ExchangeClient, DEMO_TRADING
 import pyperclip
 
-DEMO_TRADING = True  # demo vs live is handled *inside* ExchangeClient
-
-def choose_action() -> str:
+def choose_mode() -> str:
     print("\nMode:")
     print("1) Calculate only")
     print("2) Calculate and SEND ORDER")
@@ -23,12 +21,12 @@ def choose_order_type() -> OrderType:
 def get_base_symbol() -> str:
     return input("🔤 Base symbol (e.g., RUNE): ").strip()
 
-def get_inputs(order_type: OrderType, need_entry_price: bool):
+def get_inputs(order_type: OrderType):
     stop = float(input("🛑 Stop Loss Price   : "))
     lev  = float(input("⚙️  Leverage          : "))
     risk = float(input("⚠️  Risk %            : "))
     entry = None
-    if need_entry_price:
+    if order_type == OrderType.LIMIT:
         entry = float(input("🎯 Entry Price       : "))
     return stop, lev, risk, entry
 
@@ -62,25 +60,18 @@ def print_result(result, balance):
         return True
 
 def main():
-    client      = ExchangeClient(demo_trading=DEMO_TRADING)
-    mode        = choose_action()
+    client      = ExchangeClient()       # keys + demo trading are owned by the client
+    mode        = choose_mode()
     order_type  = choose_order_type()
-    base        = get_base_symbol()            # e.g., "rune"
-    symbol_full = client.build_symbol(base)    # "RUNE/USDT:USDT"
+    base        = get_base_symbol()      # e.g., "rune"
+    symbol_full = client.symbol_for(base)
 
-    # Inputs
-    stop, lev, risk, entry = get_inputs(order_type, need_entry_price=(order_type == OrderType.LIMIT))
+    stop, lev, risk, entry = get_inputs(order_type)
 
-    # Balance & entry price source:
-    if mode == "send":
-        balance = client.get_balance_usdt()
-        if order_type == OrderType.MARKET:
-            entry = client.get_market_price(symbol_full)
-    else:
-        # calc-only: still use live market price for MARKET sizing (no API keys needed)
-        balance = float(input("💰 Account Balance   : ")) if input("Use custom balance? (y/N): ").strip().lower() == "y" else 200000.0
-        if order_type == OrderType.MARKET:
-            entry = client.get_market_price(symbol_full)
+    # Always use API balance; MARKET uses current price for sizing
+    balance = client.get_balance_usdt()
+    if order_type == OrderType.MARKET:
+        entry = client.get_market_price(base)
 
     print_header(symbol_full, balance)
 
@@ -95,13 +86,11 @@ def main():
     if mode != "send" or not ok:
         return
 
-    # Place order w/ SL
+    # Place order with SL
     side   = "buy" if result["direction"] == "long" else "sell"
     amount = result["position_size"]
 
-    # best-effort leverage set
-    client.set_leverage(lev, symbol_full)
-
+    client.set_leverage(lev, base)
     resp = client.place_order_with_stop(
         order_type=order_type,
         side=side,
