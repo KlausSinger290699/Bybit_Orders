@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\NewSystem\calculator.py</StartupFile>
+    <StartupFile>Scripts\NewSystem\standalone_calculator.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -27,9 +27,11 @@
     <Compile Include="Scripts\Functioning_Tests\models.py" />
     <Compile Include="Scripts\Functioning_Tests\order_calculator.py" />
     <Compile Include="Scripts\NewSystem\calculator.py" />
+    <Compile Include="Scripts\NewSystem\standalone_calculator.py" />
     <Compile Include="Scripts\NewSystem\container.py" />
     <Compile Include="Scripts\NewSystem\enums.py" />
-    <Compile Include="Scripts\NewSystem\main_client_tests.py" />
+    <Compile Include="Scripts\NewSystem\exchange_client.py" />
+    <Compile Include="Scripts\NewSystem\standalone_client_test.py" />
     <Compile Include="Scripts\NewSystem\models.py" />
     <Compile Include="Scripts\NewSystem\order_calculator.py" />
     <Compile Include="Scripts\OldSystem\account_config.py" />
@@ -40,6 +42,12 @@
     <Compile Include="Scripts\OldSystem\input_handler.py" />
     <Compile Include="Scripts\OldSystem\main.py" />
     <Compile Include="Scripts\OldSystem\main_client_tests.py" />
+    <Compile Include="Scripts\SecurityCopy\calculator.py" />
+    <Compile Include="Scripts\SecurityCopy\container.py" />
+    <Compile Include="Scripts\SecurityCopy\enums.py" />
+    <Compile Include="Scripts\SecurityCopy\main_client_tests.py" />
+    <Compile Include="Scripts\SecurityCopy\models.py" />
+    <Compile Include="Scripts\SecurityCopy\order_calculator.py" />
     <Compile Include="Scripts\Tests\main_client_standalone_tests.py" />
     <Compile Include="Scripts\Tests\main_client_automatic_tests.py" />
     <Compile Include="Scripts\Functioning_Tests\main_client_tests.py" />
@@ -55,11 +63,13 @@
     <Content Include="Scripts\Functioning_Tests\.gitkeep" />
     <Content Include="Scripts\NewSystem\.gitkeep" />
     <Content Include="Scripts\OldSystem\.gitkeep" />
+    <Content Include="Scripts\SecurityCopy\.gitkeep" />
     <Content Include="Scripts\Tests\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Scripts\" />
     <Folder Include="Scripts\Functioning_Tests\" />
+    <Folder Include="Scripts\SecurityCopy\" />
     <Folder Include="Scripts\NewSystem\" />
     <Folder Include="Scripts\OldSystem\" />
     <Folder Include="Scripts\Tests\" />
