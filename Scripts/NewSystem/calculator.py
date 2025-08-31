@@ -1,4 +1,5 @@
-﻿import order_calculator
+﻿# calculator.py
+import order_calculator
 from order_calculator import calculate_position_sizing
 from models import TradeConfig, TradeParams
 from enums import OrderType
@@ -6,11 +7,31 @@ from container import wire_for
 from exchange_client import ExchangeClient, DEMO_TRADING
 import pyperclip
 
-def choose_mode() -> str:
-    print("\nMode:")
-    print("1) Calculate only")
-    print("2) Calculate and SEND ORDER")
-    return "send" if input("Choose (1/2): ").strip() == "2" else "calc"
+def header(base, price, balance):
+    print(f"\n🧮 {base.upper()} Position Size Calculator")
+    print("──────────────────────────────────────────────")
+    print(f"📈 {base.upper()} Price      : ${price:,.2f}")
+    print(f"💰 Balance           : ${balance:,.2f}")
+    print("──────────────────────────────────────────────")
+
+def print_result_simple(result, balance):
+    margin = result["margin_required"]
+    risk   = result["risk_usdt"]
+    print("\n📊 Calculation Result")
+    print("──────────────────────────────────────────────")
+    print(f"🔒 Margin Required   : ${margin:,.2f}")
+    print(f"⚠️  Risk Amount       : ${risk:,.2f}")
+    print("──────────────────────────────────────────────")
+    if balance is not None and margin > balance:
+        print("❌ Margin required exceeds your account balance.")
+        print("📋 Nothing was copied to clipboard.")
+        return False
+    try:
+        pyperclip.copy(str(margin))
+        print(f"📋 Copied margin required to clipboard: {margin}")
+    except Exception:
+        pass
+    return True
 
 def choose_order_type() -> OrderType:
     print("\nOrder Type:")
@@ -18,78 +39,42 @@ def choose_order_type() -> OrderType:
     print("2) Limit")
     return OrderType.MARKET if input("Choose (1/2): ").strip() == "1" else OrderType.LIMIT
 
-def get_base_symbol() -> str:
-    return input("🔤 Base symbol (e.g., RUNE): ").strip()
-
-def get_inputs(order_type: OrderType):
-    stop = float(input("🛑 Stop Loss Price   : "))
-    lev  = float(input("⚙️  Leverage          : "))
-    risk = float(input("⚠️  Risk %            : "))
-    entry = None
-    if order_type == OrderType.LIMIT:
-        entry = float(input("🎯 Entry Price       : "))
-    return stop, lev, risk, entry
-
-def print_header(symbol_display: str | None, balance: float | None):
-    print(f"\n🧮 Position Size Calculator")
-    print(f"──────────────────────────────────────────────")
-    if symbol_display:
-        print(f"📈 Symbol            : {symbol_display}")
-    if balance is not None:
-        print(f"💰 Balance           : ${balance:,.2f}")
-    print(f"──────────────────────────────────────────────")
-
-def print_result(result, balance):
-    margin = result['margin_required']
-    risk   = result['risk_usdt']
-
-    print(f"\n📊 Calculation Result")
-    print(f"──────────────────────────────────────────────")
-    print(f"🔒 Margin Required   : ${margin}")
-    print(f"⚠️  Risk Amount       : ${risk}")
-    print(f"──────────────────────────────────────────────")
-
-    if balance is not None and margin > balance:
-        print(f"❌ ERROR: Margin required (${margin}) exceeds your balance (${balance})")
-        print(f"🛑 Trade cannot be executed with current leverage and stop loss.")
-        print(f"📋 Nothing was copied to clipboard.")
-        return False
-    else:
-        pyperclip.copy(str(margin))
-        print(f"📋 Copied margin required to clipboard: {margin}")
-        return True
-
 def main():
-    client      = ExchangeClient()       # keys + demo trading are owned by the client
-    mode        = choose_mode()
-    order_type  = choose_order_type()
-    base        = get_base_symbol()      # e.g., "rune"
+    client = ExchangeClient()
+    base = input("🔤 Base symbol (e.g., RUNE): ").strip()
+    order_type = choose_order_type()
+
+    balance = client.get_balance_usdt()
+    live_price = client.get_market_price(base)
+    header(base, live_price, balance)
+
+    stop = float(input("🛑 Stop Loss Price   : ").strip())
+    lev  = float(input("⚙️  Leverage          : ").strip())
+    risk = float(input("⚠️  Risk %            : ").strip())
+
+    if order_type == OrderType.LIMIT:
+        entry = float(input("🎯 Entry Price       : ").strip())
+    else:
+        entry = live_price
+        print(f"🎯 Entry Price       : {entry}")
+
     symbol_full = client.symbol_for(base)
 
-    stop, lev, risk, entry = get_inputs(order_type)
-
-    # Always use API balance; MARKET uses current price for sizing
-    balance = client.get_balance_usdt()
-    if order_type == OrderType.MARKET:
-        entry = client.get_market_price(base)
-
-    print_header(symbol_full, balance)
-
-    # Wire DI for sizing
     config = TradeConfig(simulate_mode=DEMO_TRADING, symbol=symbol_full, order_type=order_type)
     params = TradeParams(stop_loss_price=stop, risk_percent=risk, leverage=lev, entry_price=entry)
-
     wire_for(config, params, modules=[order_calculator])
-    result = calculate_position_sizing(balance)
-    ok = print_result(result, balance)
 
-    if mode != "send" or not ok:
+    result = calculate_position_sizing(balance)
+    ok = print_result_simple(result, balance)
+    if not ok:
         return
 
-    # Place order with SL
-    side   = "buy" if result["direction"] == "long" else "sell"
-    amount = result["position_size"]
+    send = input("\n➡️  Send order to exchange? (y/N): ").strip().lower() == "y"
+    if not send:
+        return
 
+    side = "buy" if result["direction"] == "long" else "sell"
+    amount = result["position_size"]
     client.set_leverage(lev, base)
     resp = client.place_order_with_stop(
         order_type=order_type,

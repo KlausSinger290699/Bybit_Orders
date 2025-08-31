@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\NewSystem\standalone_client_test.py</StartupFile>
+    <StartupFile>Scripts\NewSystem\calculator.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
