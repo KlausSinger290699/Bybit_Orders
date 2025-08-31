@@ -44,41 +44,44 @@ class ExchangeClient:
     @inject
     def apply_leverage(
         self,
-        leverage: float | None = None,
         config: TradeConfig = Provide[Container.trade_config],
         params: TradeParams = Provide[Container.trade_params],
     ):
-        lev = int(leverage if leverage is not None else params.leverage)
-        return self.exchange.set_leverage(lev, config.symbol)
+        return self.exchange.set_leverage(int(params.leverage), config.symbol)
 
     @inject
-    def place_order_with_stop(
+    def market_order_with_stop(
         self,
         side: str,
         amount: float,
-        order_type: OrderType | None = None,
-        entry_price: float | None = None,
-        stop_loss_price: float | None = None,
         config: TradeConfig = Provide[Container.trade_config],
         params: TradeParams = Provide[Container.trade_params],
     ):
         symbol = config.symbol
-        typ    = (order_type if order_type is not None else config.order_type)
-        entry  = (entry_price if entry_price is not None else params.entry_price)
-        sl_px  = (stop_loss_price if stop_loss_price is not None else params.stop_loss_price)
-
+        sl_px  = params.stop_loss_price
         amt = float(self.exchange.amount_to_precision(symbol, amount))
         sl  = self.exchange.price_to_precision(symbol, sl_px)
+        return self.exchange.create_order(
+            symbol, "market", side, amt, None,
+            {"positionIdx": 1, "stopLoss": sl, "slTriggerBy": "LastPrice", "tpslMode": "Full"}
+        )
 
-        if typ == OrderType.MARKET:
-            return self.exchange.create_order(
-                symbol, "market", side, amt, None,
-                {"positionIdx": 1, "stopLoss": sl, "slTriggerBy": "LastPrice", "tpslMode": "Full"}
-            )
-
+    @inject
+    def limit_order_with_stop(
+        self,
+        side: str,
+        amount: float,
+        config: TradeConfig = Provide[Container.trade_config],
+        params: TradeParams = Provide[Container.trade_params],
+    ):
+        symbol = config.symbol
+        entry  = params.entry_price
+        sl_px  = params.stop_loss_price
         if entry is None:
             raise ValueError("entry_price must be provided for LIMIT orders.")
-        px = self.exchange.price_to_precision(symbol, float(entry))
+        amt = float(self.exchange.amount_to_precision(symbol, amount))
+        px  = self.exchange.price_to_precision(symbol, float(entry))
+        sl  = self.exchange.price_to_precision(symbol, sl_px)
         return self.exchange.create_order(
             symbol, "limit", side, amt, px,
             {"postOnly": True, "positionIdx": 1, "stopLoss": sl, "slTriggerBy": "LastPrice", "tpslMode": "Full"}

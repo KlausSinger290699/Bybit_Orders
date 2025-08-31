@@ -1,4 +1,5 @@
-﻿from dependency_injector.wiring import inject, Provide
+﻿# order_calculator.py
+from dependency_injector.wiring import inject, Provide
 from container import Container
 from models import TradeConfig, TradeParams
 

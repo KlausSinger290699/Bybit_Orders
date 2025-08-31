@@ -39,6 +39,14 @@ def choose_order_type() -> OrderType:
     print("2) Limit")
     return OrderType.MARKET if input("Choose (1/2): ").strip() == "1" else OrderType.LIMIT
 
+def execute_market_order(client: ExchangeClient, side: str, amount: float):
+    client.apply_leverage()
+    return client.market_order_with_stop(side=side, amount=amount)
+
+def execute_limit_order(client: ExchangeClient, side: str, amount: float):
+    client.apply_leverage()
+    return client.limit_order_with_stop(side=side, amount=amount)
+
 def main():
     client = ExchangeClient()
     base = input("🔤 Base symbol (e.g., RUNE): ").strip()
@@ -62,7 +70,6 @@ def main():
 
     trade  = TradeConfig(simulate_mode=DEMO_TRADING, symbol=symbol_full, order_type=order_type)
     params = TradeParams(stop_loss_price=stop, risk_percent=risk, leverage=lev, entry_price=entry)
-
     wire_for(trade, params, modules=[order_calculator, exchange_client_module])
 
     result = calculate_position_sizing(balance)
@@ -77,14 +84,11 @@ def main():
     side   = "buy" if result["direction"] == "long" else "sell"
     amount = result["position_size"]
 
-    client.apply_leverage(lev)
-    resp = client.place_order_with_stop(
-        side=side,
-        amount=amount,
-        order_type=order_type,
-        entry_price=entry if order_type == OrderType.LIMIT else None,
-        stop_loss_price=stop,
-    )
+    if order_type == OrderType.MARKET:
+        resp = execute_market_order(client, side, amount)
+    else:
+        resp = execute_limit_order(client, side, amount)
+
     print("✅ Order placed:", resp.get("id", resp))
 
 if __name__ == "__main__":
