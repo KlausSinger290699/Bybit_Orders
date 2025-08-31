@@ -1,5 +1,7 @@
+# exchange_client.py
 import ccxt
 from enums import OrderType
+from models import OrderPlan
 
 API_KEY         = "JVyNFG6yyMvD7zucnP"
 API_SECRET      = "9dOWIBweh9EZKCnll6Pc1CSUaJ9xs9CStzSo"
@@ -16,23 +18,19 @@ class ExchangeClient:
         demo_trading: bool = DEMO_TRADING,
         default_type: str = DEFAULT_TYPE,
     ):
-        self.demo_trading = bool(demo_trading)
-
         self.exchange = ccxt.bybit({
             "apiKey": api_key,
             "secret": api_secret,
             "enableRateLimit": True,
         })
-
-        self.exchange.enable_demo_trading(self.demo_trading)
+        self.exchange.enable_demo_trading(bool(demo_trading))
         self.exchange.options["defaultType"] = default_type
-        print(f"Loading markets ({'testnet' if self.demo_trading else 'live'})...")
+        print(f"Loading markets ({'testnet' if demo_trading else 'live'})...")
         self.exchange.load_markets()
         print("Ready.\n")
 
     def symbol_for(self, base: str) -> str:
-        base_clean = base.strip().upper()
-        return f"{base_clean}/{QUOTE}{CONTRACT_SUFFIX}"
+        return f"{base.strip().upper()}/{QUOTE}{CONTRACT_SUFFIX}"
 
     def get_balance_usdt(self) -> float:
         bal = self.exchange.fetch_balance()
@@ -42,37 +40,27 @@ class ExchangeClient:
         symbol = self.symbol_for(base)
         return float(self.exchange.fetch_ticker(symbol)["last"])
 
-    def set_leverage(self, leverage: float, base: str):
-        symbol = self.symbol_for(base)
+    def apply_leverage(self, plan: OrderPlan):
         try:
-            return self.exchange.set_leverage(int(leverage), symbol)
+            return self.exchange.set_leverage(int(plan.leverage), plan.symbol)
         except Exception as e:
             return {"warn": str(e)}
 
-    def place_order_with_stop(
-        self,
-        order_type: OrderType,
-        side: str,
-        base: str,
-        amount: float,
-        stop_loss_price: float,
-        entry_price: float | None = None,
-        post_only: bool = True,
-    ):
-        symbol = self.symbol_for(base)
-        amt    = float(self.exchange.amount_to_precision(symbol, amount))
-        sl_px  = self.exchange.price_to_precision(symbol, stop_loss_price)
+    def place_order_with_stop(self, plan: OrderPlan):
+        symbol = plan.symbol
+        amt    = float(self.exchange.amount_to_precision(symbol, plan.amount))
+        sl_px  = self.exchange.price_to_precision(symbol, plan.stop_loss_price)
 
-        if order_type == OrderType.MARKET:
+        if plan.order_type == OrderType.MARKET:
             return self.exchange.create_order(
-                symbol, "market", side, amt, None,
+                symbol, "market", plan.side, amt, None,
                 {"positionIdx": 1, "stopLoss": sl_px, "slTriggerBy": "LastPrice", "tpslMode": "Full"}
             )
 
-        if entry_price is None:
+        if plan.entry_price is None:
             raise ValueError("entry_price must be provided for LIMIT orders.")
-        px = self.exchange.price_to_precision(symbol, entry_price)
+        px = self.exchange.price_to_precision(symbol, float(plan.entry_price))
         return self.exchange.create_order(
-            symbol, "limit", side, amt, px,
-            {"postOnly": post_only, "positionIdx": 1, "stopLoss": sl_px, "slTriggerBy": "LastPrice", "tpslMode": "Full"}
+            symbol, "limit", plan.side, amt, px,
+            {"postOnly": True, "positionIdx": 1, "stopLoss": sl_px, "slTriggerBy": "LastPrice", "tpslMode": "Full"}
         )

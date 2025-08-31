@@ -1,7 +1,7 @@
 ﻿# calculator.py
 import order_calculator
 from order_calculator import calculate_position_sizing
-from models import TradeConfig, TradeParams
+from models import TradeConfig, TradeParams, OrderPlan
 from enums import OrderType
 from container import wire_for
 from exchange_client import ExchangeClient, DEMO_TRADING
@@ -75,16 +75,19 @@ def main():
 
     side = "buy" if result["direction"] == "long" else "sell"
     amount = result["position_size"]
-    client.set_leverage(lev, base)
-    resp = client.place_order_with_stop(
+
+    plan = OrderPlan(
+        symbol=symbol_full,
         order_type=order_type,
         side=side,
-        base=base,
         amount=amount,
         stop_loss_price=stop,
         entry_price=entry if order_type == OrderType.LIMIT else None,
-        post_only=True
+        leverage=lev,
     )
+
+    client.apply_leverage(plan)
+    resp = client.place_order_with_stop(plan)
     print("✅ Order placed:", resp.get("id", resp))
 
 if __name__ == "__main__":

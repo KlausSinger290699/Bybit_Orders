@@ -13,3 +13,13 @@ class TradeParams:
     risk_percent: float
     leverage: float
     entry_price: float | None    
+
+@dataclass
+class OrderPlan:
+    symbol: str
+    order_type: OrderType
+    side: str            
+    amount: float        
+    stop_loss_price: float
+    entry_price: float | None
+    leverage: float
