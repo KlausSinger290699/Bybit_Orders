@@ -27,6 +27,7 @@
     <Compile Include="Scripts\Functioning_Tests\models.py" />
     <Compile Include="Scripts\Functioning_Tests\order_calculator.py" />
     <Compile Include="Scripts\NewSystem\calculator.py" />
+    <Compile Include="Scripts\NewSystem\multiple_exchange_client.py" />
     <Compile Include="Scripts\NewSystem\standalone_calculator.py" />
     <Compile Include="Scripts\NewSystem\container.py" />
     <Compile Include="Scripts\NewSystem\enums.py" />

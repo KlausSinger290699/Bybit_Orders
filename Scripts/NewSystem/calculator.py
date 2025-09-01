@@ -32,21 +32,21 @@ def print_result_simple(result, balance):
     except Exception:
         pass
     return True
-
+    
 def choose_order_type() -> OrderType:
     print("\nOrder Type:")
     print("1) Market")
     print("2) Limit")
     return OrderType.MARKET if input("Choose (1/2): ").strip() == "1" else OrderType.LIMIT
-
+    
 def execute_market_order(client: ExchangeClient, side: str, amount: float):
     client.apply_leverage()
     return client.market_order_with_stop(side=side, amount=amount)
-
+    
 def execute_limit_order(client: ExchangeClient, side: str, amount: float):
     client.apply_leverage()
     return client.limit_order_with_stop(side=side, amount=amount)
-
+    
 def main():
     client = ExchangeClient()
     base = input("🔤 Base symbol (e.g., RUNE): ").strip()
