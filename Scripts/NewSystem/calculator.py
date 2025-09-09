@@ -1,4 +1,5 @@
-﻿import pyperclip
+﻿# calculator.py
+import pyperclip
 from datetime import datetime
 
 import order_calculator
@@ -62,7 +63,69 @@ def prompt_or_default(prompt: str, prev: str | None = None) -> str:
     return prev if raw == "" and prev is not None else raw
 
 
-def run_once(client: ExchangeClient, i: int, prev: dict):
+def manage_orders(client: ExchangeClient, i: int):
+    """Super simple order management flow."""
+    hr("MANAGE ORDERS", i)
+
+    base = input("Ticker (e.g., RUNE): ").strip()
+    if base.lower() in {"q", "quit", "exit"}:
+        return
+
+    symbol = client.symbol_for(base)
+
+    print("\nActions:")
+    print("1) Cancel ours")
+    print("2) Cancel all")
+    print("3) Cancel key")
+    print("4) Close all positions")
+    choice = input("Choose (1/2/3/4) or type: cancel ours | cancel all | key <ID> | close all: ").strip()
+
+    lower = choice.lower()
+
+    if choice == "1" or lower == "cancel ours":
+        res = client.cancel_all_ours(symbol)
+        print("\n🧹 Cancel ours:")
+        for r in res:
+            ok = r.get("ok")
+            n = len(r.get("cancelled", [])) if r.get("cancelled") else 0
+            print(f" • [{r['name']}] {'OK' if ok else 'ERR'} cancelled={n} errors={len(r.get('errors', []))}")
+
+    elif choice == "2" or lower == "cancel all":
+        res = client.cancel_all_everywhere(symbol)
+        print("\n🧹 Cancel ALL open orders:")
+        for r in res:
+            ok = r.get("ok")
+            if "cancelled" in r:
+                n = len(r.get("cancelled", []))
+                print(f" • [{r['name']}] {'OK' if ok else 'ERR'} cancelled={n} errors={len(r.get('errors', []))}")
+            else:
+                print(f" • [{r['name']}] {'OK' if ok else 'ERR'} (exchange-native)")
+
+    elif choice == "3" or lower.startswith("key "):
+        key = choice.split(" ", 1)[1].strip() if lower.startswith("key ") else input("Order ID: ").strip()
+        if not key:
+            print("⚠️  Provide an order id or clientOrderId.")
+        else:
+            res = client.cancel_specific_everywhere(key, symbol)
+            print("\n🧹 Cancel by key:")
+            for r in res:
+                print(f" • [{r['name']}] {'OK' if r.get('ok') else 'ERR'}")
+
+    elif choice == "4" or lower == "close all":
+        res = client.close_all_positions(symbol)
+        print("\n🧨 Close ALL positions (reduce-only):")
+        for r in res:
+            ok = r.get("ok")
+            n = len(r.get("closed", [])) if r.get("closed") else 0
+            print(f" • [{r['name']}] {'OK' if ok else 'ERR'} closed={n} errors={len(r.get('errors', []))}")
+
+    else:
+        print("⚠️  Unknown choice.")
+
+    hr("END (OPS)", i)
+
+
+def trade_once(client: ExchangeClient, i: int, prev: dict):
     hr("START", i)
 
     base = prompt_or_default("🔤 Base (e.g., RUNE)", prev.get("base"))
@@ -130,14 +193,19 @@ def main():
     client = ExchangeClient()
     prev: dict = {}
     i = 1
-    print("\nTip: type 'q' at Base prompt to quit.")
+    print("\nTip: type 'q' to quit.")
     try:
         while True:
             try:
-                res = run_once(client, i, prev)
-                if res == "quit":
-                    print("\n👋 Bye.")
-                    break
+                print("\nMode:\n1) Trade\n2) Manage orders")
+                mode = input("Choose (1/2): ").strip()
+                if mode == "2":
+                    manage_orders(client, i)
+                else:
+                    res = trade_once(client, i, prev)
+                    if res == "quit":
+                        print("\n👋 Bye.")
+                        break
             except ValueError as ve:
                 print(f"\n❗ Input error: {ve}")
             except Exception as e:

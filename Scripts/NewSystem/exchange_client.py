@@ -1,4 +1,5 @@
-﻿import ccxt
+﻿import time
+import ccxt
 from dependency_injector.wiring import Provide, inject
 from container import Container
 from enums import OrderType
@@ -12,6 +13,9 @@ DEFAULT_TYPE    = "future"
 DEFAULT_EXID    = "bybit"
 QUOTE           = "USDT"
 CONTRACT_SUFFIX = ":USDT"
+
+# All orders placed by this software are tagged with this prefix.
+ORDER_TAG = "NX"  # change if you want a different signature
 
 ACCOUNTS: list[dict] = [
     {
@@ -56,7 +60,7 @@ class SingleExchangeClient:
         self._force_hedge_mode()
         print("Ready.\n")
 
-    # ——— Basics ———
+    # ---------- basic helpers ----------
     def symbol_for(self, base: str) -> str:
         return f"{base.strip().upper()}/{QUOTE}{CONTRACT_SUFFIX}"
 
@@ -86,7 +90,6 @@ class SingleExchangeClient:
             return None
         return None
 
-    # ——— Mode / leverage ———
     def _force_hedge_mode(self) -> None:
         try:
             self.exchange.set_position_mode(True)  # dual-side
@@ -107,6 +110,14 @@ class SingleExchangeClient:
     def _position_idx_for_side(side: str) -> int:
         return 1 if side.lower() == "buy" else 2
 
+    def _new_client_oid(self, group_key: str | None = None) -> str:
+        ts = int(time.time() * 1000)
+        # Keep the same logical group across exchanges if group_key is provided
+        # Format: PREFIX-GROUP-ACCOUNT-TS  (clientOrderId)
+        base = f"{ORDER_TAG}-{group_key}-{self.name}" if group_key else f"{ORDER_TAG}-{self.name}"
+        return f"{base}-{ts}"
+
+    # ---------- leverage ----------
     @inject
     def apply_leverage(
         self,
@@ -130,12 +141,13 @@ class SingleExchangeClient:
                 return {"ignored": "leverage not modified"}
             raise
 
-    # ——— Orders ———
+    # ---------- orders (include clientOrderId) ----------
     @inject
     def market_order_with_stop(
         self,
         side: str,
         amount: float,
+        group_key: str | None = None,
         config: TradeConfig = Provide[Container.trade_config],
         params: TradeParams = Provide[Container.trade_params],
     ):
@@ -143,6 +155,7 @@ class SingleExchangeClient:
         sl_px = params.stop_loss_price
         amt = float(self.exchange.amount_to_precision(symbol, amount))
         sl = self.exchange.price_to_precision(symbol, sl_px)
+        client_oid = self._new_client_oid(group_key)
         return self.exchange.create_order(
             symbol,
             "market",
@@ -150,6 +163,7 @@ class SingleExchangeClient:
             amt,
             None,
             {
+                "clientOrderId": client_oid,
                 "positionIdx": self._position_idx_for_side(side),
                 "stopLoss": sl,
                 "slTriggerBy": "LastPrice",
@@ -162,6 +176,7 @@ class SingleExchangeClient:
         self,
         side: str,
         amount: float,
+        group_key: str | None = None,
         config: TradeConfig = Provide[Container.trade_config],
         params: TradeParams = Provide[Container.trade_params],
     ):
@@ -173,6 +188,7 @@ class SingleExchangeClient:
         amt = float(self.exchange.amount_to_precision(symbol, amount))
         px = self.exchange.price_to_precision(symbol, float(entry))
         sl = self.exchange.price_to_precision(symbol, sl_px)
+        client_oid = self._new_client_oid(group_key)
         return self.exchange.create_order(
             symbol,
             "limit",
@@ -180,6 +196,7 @@ class SingleExchangeClient:
             amt,
             px,
             {
+                "clientOrderId": client_oid,
                 "postOnly": True,
                 "positionIdx": self._position_idx_for_side(side),
                 "stopLoss": sl,
@@ -188,9 +205,110 @@ class SingleExchangeClient:
             },
         )
 
+    # ---------- order management (cancel/close) ----------
+    def fetch_open_orders(self, symbol: str | None = None) -> list[dict]:
+        try:
+            return self.exchange.fetch_open_orders(symbol)
+        except Exception:
+            return []
+
+    def cancel_order_by_key(self, order_key: str, symbol: str | None = None) -> dict:
+        """
+        order_key can be an exchange order id OR a clientOrderId.
+        We try to cancel by id first; if that fails, we search open orders and cancel matches by clientOrderId.
+        """
+        # Try direct id cancel (fast path)
+        try:
+            return {"ok": True, "resp": self.exchange.cancel_order(order_key, symbol)}
+        except Exception:
+            pass
+
+        # Fallback: find by clientOrderId among open orders
+        opens = self.fetch_open_orders(symbol)
+        for o in opens:
+            cid = (o.get("clientOrderId") or "").strip()
+            oid = (o.get("id") or "").strip()
+            if order_key == cid or order_key == oid:
+                try:
+                    return {"ok": True, "resp": self.exchange.cancel_order(oid or order_key, symbol)}
+                except Exception as e:
+                    return {"ok": False, "error": str(e)}
+        return {"ok": False, "error": "not found among open orders"}
+
+    def cancel_all_ours(self, symbol: str | None = None) -> dict:
+        """Cancel all open orders that carry our ORDER_TAG in clientOrderId."""
+        cancelled, errors = [], []
+        for o in self.fetch_open_orders(symbol):
+            cid = (o.get("clientOrderId") or "")
+            if cid.startswith(ORDER_TAG):
+                oid = o.get("id")
+                try:
+                    resp = self.exchange.cancel_order(oid, symbol)
+                    cancelled.append({"id": oid, "clientOrderId": cid, "resp": resp})
+                except Exception as e:
+                    errors.append({"id": oid, "clientOrderId": cid, "error": str(e)})
+        return {"ok": len(errors) == 0, "cancelled": cancelled, "errors": errors}
+
+    def cancel_all_open_orders(self, symbol: str | None = None) -> dict:
+        """
+        Cancel all open orders (ours + non-ours). Use exchange native 'cancel_all_orders' if present,
+        else fall back to iterating open orders.
+        """
+        try:
+            if hasattr(self.exchange, "cancel_all_orders"):
+                resp = self.exchange.cancel_all_orders(symbol)
+                return {"ok": True, "resp": resp}
+        except Exception:
+            pass
+
+        cancelled, errors = [], []
+        for o in self.fetch_open_orders(symbol):
+            oid = o.get("id")
+            try:
+                resp = self.exchange.cancel_order(oid, symbol)
+                cancelled.append({"id": oid, "resp": resp})
+            except Exception as e:
+                errors.append({"id": oid, "error": str(e)})
+        return {"ok": len(errors) == 0, "cancelled": cancelled, "errors": errors}
+
+    def close_all_positions(self, symbol: str | None = None) -> dict:
+        """
+        Flatten positions using reduce-only market orders.
+        In hedge mode, close long with sell (positionIdx=1) and short with buy (positionIdx=2).
+        """
+        closed, errors = [], []
+        try:
+            positions = self.exchange.fetch_positions([symbol]) if symbol else self.exchange.fetch_positions()
+        except Exception as e:
+            return {"ok": False, "error": f"fetch_positions failed: {e}"}
+
+        def _reduce(symbol: str, side: str, amount: float, position_idx: int):
+            try:
+                amt = float(self.exchange.amount_to_precision(symbol, amount))
+                params = {"reduceOnly": True, "positionIdx": position_idx}
+                resp = self.exchange.create_order(symbol, "market", side, amt, None, params)
+                closed.append({"symbol": symbol, "side": side, "amount": amt, "resp": resp})
+            except Exception as e:
+                errors.append({"symbol": symbol, "side": side, "error": str(e)})
+
+        for p in positions or []:
+            sym = p.get("symbol")
+            if symbol and sym != symbol:
+                continue
+            contracts = abs(float(p.get("contracts") or p.get("contractSize") or p.get("amount") or 0))
+            if contracts <= 0:
+                continue
+            side = (p.get("side") or "").lower()  # 'long' or 'short' in ccxt
+            if side == "long":
+                _reduce(sym, "sell", contracts, 1)  # close long
+            elif side == "short":
+                _reduce(sym, "buy", contracts, 2)   # close short
+
+        return {"ok": len(errors) == 0, "closed": closed, "errors": errors}
+
 
 class ExchangeClient:
-    """Facade the calculator talks to. Manages one or many accounts internally."""
+    """The only object the calculator talks to. Manages one or many accounts internally."""
     def __init__(self):
         self._clients: list[SingleExchangeClient] = []
         if ACCOUNTS:
@@ -226,13 +344,18 @@ class ExchangeClient:
             "limit_order_with_stop",
             "apply_leverage",
             "symbol_for",
+            "fetch_open_orders",
+            "cancel_order_by_key",
+            "cancel_all_ours",
+            "cancel_all_open_orders",
+            "close_all_positions",
         )
         for c in self._clients:
             for attr in required:
                 if not hasattr(c, attr):
                     raise AttributeError(f"{c.__class__.__name__} missing required method: {attr}")
 
-    # ——— Primary proxies (UI/preview) ———
+    # ---------- primary proxies (for UI/preview) ----------
     @property
     def primary(self) -> SingleExchangeClient:
         return self._clients[self._display_index]
@@ -255,8 +378,9 @@ class ExchangeClient:
     def preview_primary_sizing(self, balance_usdt: float) -> dict:
         return calculate_position_sizing(balance_usdt)
 
-    # ——— Fan-out dispatch ———
+    # ---------- trading (fan-out) ----------
     def submit_all(self, order_type: OrderType, side: str) -> list[dict]:
+        group_key = str(int(time.time() * 1000))  # same logical group across exchanges
         results: list[dict] = []
         for c in self._clients:
             try:
@@ -266,12 +390,53 @@ class ExchangeClient:
                 r_usd = sizing["risk_usdt"]
                 c.apply_leverage()
                 if order_type == OrderType.MARKET:
-                    resp = c.market_order_with_stop(side=side, amount=amt)
+                    resp = c.market_order_with_stop(side=side, amount=amt, group_key=group_key)
                 else:
-                    resp = c.limit_order_with_stop(side=side, amount=amt)
+                    resp = c.limit_order_with_stop(side=side, amount=amt, group_key=group_key)
                 results.append(
                     {"name": c.name, "ok": True, "id": resp.get("id", resp), "amount": amt, "risk_usd": r_usd}
                 )
             except Exception as e:
                 results.append({"name": c.name, "ok": False, "error": str(e)})
         return results
+
+    # ---------- order management (across all accounts) ----------
+    def cancel_specific_everywhere(self, order_key: str, symbol: str | None = None) -> list[dict]:
+        """
+        A) Cancel a specific order across all APIs by id or clientOrderId.
+        """
+        out = []
+        for c in self._clients:
+            res = c.cancel_order_by_key(order_key, symbol)
+            out.append({"name": c.name, **res})
+        return out
+
+    def cancel_all_ours(self, symbol: str | None = None) -> list[dict]:
+        """
+        B) Cancel every order our software placed (matches ORDER_TAG).
+        """
+        out = []
+        for c in self._clients:
+            res = c.cancel_all_ours(symbol)
+            out.append({"name": c.name, **res})
+        return out
+
+    def cancel_all_everywhere(self, symbol: str | None = None) -> list[dict]:
+        """
+        C) Cancel every open order on every API (ours + non-ours).
+        """
+        out = []
+        for c in self._clients:
+            res = c.cancel_all_open_orders(symbol)
+            out.append({"name": c.name, **res})
+        return out
+
+    def close_all_positions(self, symbol: str | None = None) -> list[dict]:
+        """
+        Flatten positions everywhere (reduce-only market exits).
+        """
+        out = []
+        for c in self._clients:
+            res = c.close_all_positions(symbol)
+            out.append({"name": c.name, **res})
+        return out
