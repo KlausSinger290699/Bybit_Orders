@@ -1,14 +1,13 @@
-﻿# calculator.py
-import pyperclip
+﻿import pyperclip
 from datetime import datetime
 
 import order_calculator
 import exchange_client as exchange_client_module
-from order_calculator import calculate_position_sizing
-from models import TradeConfig, TradeParams
-from enums import OrderType
 from container import wire_for
+from enums import OrderType
 from exchange_client import ExchangeClient
+from models import TradeConfig, TradeParams
+from order_calculator import calculate_position_sizing
 
 
 def hr(title: str = "", i: int = 0):
@@ -96,34 +95,24 @@ def run_once(client: ExchangeClient, i: int, prev: dict):
         entry = live_px
         print(f"🎯 Entry      : {entry}")
 
-    # Wire DI once — used by both preview & dispatch inside exchange_client
     trade = TradeConfig(simulate_mode=True, symbol=symbol, order_type=order_type)
     params = TradeParams(stop_loss_price=stop, risk_percent=risk, leverage=lev, entry_price=entry)
     wire_for(trade, params, modules=[order_calculator, exchange_client_module])
 
-    # Preview for primary only
     primary_result = client.preview_primary_sizing(balance)
     if not print_result_simple(primary_result, balance):
         hr("END (INSUFFICIENT BALANCE)", i)
-        prev.update({
-            "base": base, "order_type": order_type, "lev": lev,
-            "risk": risk, "entry": entry, "stop": stop
-        })
+        prev.update({"base": base, "order_type": order_type, "lev": lev, "risk": risk, "entry": entry, "stop": stop})
         return
 
     send = input("\n➡️  Send order? (y/N): ").strip().lower() == "y"
     if not send:
         print("⏭️  Skipped.")
         hr("END (SKIPPED)", i)
-        prev.update({
-            "base": base, "order_type": order_type, "lev": lev,
-            "risk": risk, "entry": entry, "stop": stop
-        })
+        prev.update({"base": base, "order_type": order_type, "lev": lev, "risk": risk, "entry": entry, "stop": stop})
         return
 
     side = "buy" if primary_result["direction"] == "long" else "sell"
-
-    # Single call — exchange layer fans out to all accounts internally
     results = client.submit_all(order_type, side)
 
     print("\n🚀 Dispatch:")
@@ -134,10 +123,7 @@ def run_once(client: ExchangeClient, i: int, prev: dict):
             print(f" • [{r['name']}] ERR {r['error']}")
 
     hr("END (OK)", i)
-    prev.update({
-        "base": base, "order_type": order_type, "lev": lev,
-        "risk": risk, "entry": entry, "stop": stop
-    })
+    prev.update({"base": base, "order_type": order_type, "lev": lev, "risk": risk, "entry": entry, "stop": stop})
 
 
 def main():
