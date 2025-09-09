@@ -8,7 +8,7 @@ from order_calculator import calculate_position_sizing
 from models import TradeConfig, TradeParams
 from enums import OrderType
 from container import wire_for
-from exchange_client import ExchangeClient, DEMO_TRADING
+from exchange_client import ExchangeClient
 
 
 def hr(title: str = "", i: int = 0):
@@ -20,9 +20,11 @@ def hr(title: str = "", i: int = 0):
         print("─" * (64 + len(str(i))))
 
 
-def header(base: str, price: float, balance: float):
+def header(base: str, price: float, balance: float, account_name: str | None = None):
     print(f"\n🧮 {base.upper()} Position Size")
     print("──────────────────────────────────────────────")
+    if account_name:
+        print(f"🧩 Account    : {account_name}")
     print(f"📈 Price      : ${price:,.2f}")
     print(f"💰 Balance    : ${balance:,.2f}")
     print("──────────────────────────────────────────────")
@@ -33,17 +35,14 @@ def print_result_simple(result: dict, balance: float | None):
     risk = result["risk_usdt"]
     lev = result["leverage"]
     order_value = margin * lev
-
     print("\n📊 Result")
     print("──────────────────────────────────────────────")
     print(f"🔒 Margin     : ${margin:,.2f}   ← copied")
     print(f"🧾 OrderValue : ${order_value:,.2f}  (× {lev:g}x)")
     print(f"⚠️  Risk       : ${risk:,.2f}")
-
     if balance is not None and margin > balance:
         print("❌ Margin exceeds balance. Nothing copied.")
         return False
-
     try:
         pyperclip.copy(str(margin))
     except Exception:
@@ -53,26 +52,14 @@ def print_result_simple(result: dict, balance: float | None):
 
 def choose_order_type(prev: OrderType | None = None) -> OrderType:
     print("\nOrder Type:\n1) Market\n2) Limit")
-    hint = f" [Enter={'Market' if prev == OrderType.MARKET else 'Limit'}]" if prev else ""
-    raw = input(f"Choose (1/2){hint}: ").strip()
+    raw = input("Choose (1/2): ").strip()
     if raw == "" and prev is not None:
         return prev
     return OrderType.MARKET if raw == "1" else OrderType.LIMIT
 
 
-def execute_market_order(client: ExchangeClient, side: str, amount: float):
-    client.apply_leverage()
-    return client.market_order_with_stop(side=side, amount=amount)
-
-
-def execute_limit_order(client: ExchangeClient, side: str, amount: float):
-    client.apply_leverage()
-    return client.limit_order_with_stop(side=side, amount=amount)
-
-
 def prompt_or_default(prompt: str, prev: str | None = None) -> str:
-    suffix = f" [Enter={prev}]" if prev is not None else ""
-    raw = input(f"{prompt}{suffix}: ").strip()
+    raw = input(f"{prompt}: ").strip()
     return prev if raw == "" and prev is not None else raw
 
 
@@ -87,13 +74,12 @@ def run_once(client: ExchangeClient, i: int, prev: dict):
 
     balance = client.get_balance_usdt()
     live_px = client.get_market_price(base)
-    header(base, live_px, balance)
+    header(base, live_px, balance, client.name())
 
     symbol = client.symbol_for(base)
-
     stop = float(prompt_or_default("🛑 Stop Loss", f"{prev['stop']}" if "stop" in prev else None))
 
-    lev_input = prompt_or_default("⚙️  Leverage (Enter=current)", f"{prev['lev']}" if prev.get("lev") is not None else None)
+    lev_input = prompt_or_default("⚙️  Leverage", f"{prev['lev']}" if prev.get("lev") is not None else None)
     if lev_input:
         lev = float(lev_input)
         print(f"⚙️  Leverage    : {lev:g}x")
@@ -110,31 +96,48 @@ def run_once(client: ExchangeClient, i: int, prev: dict):
         entry = live_px
         print(f"🎯 Entry      : {entry}")
 
-    trade = TradeConfig(simulate_mode=DEMO_TRADING, symbol=symbol, order_type=order_type)
+    # Wire DI once — used by both preview & dispatch inside exchange_client
+    trade = TradeConfig(simulate_mode=True, symbol=symbol, order_type=order_type)
     params = TradeParams(stop_loss_price=stop, risk_percent=risk, leverage=lev, entry_price=entry)
     wire_for(trade, params, modules=[order_calculator, exchange_client_module])
 
-    result = calculate_position_sizing(balance)
-    if not print_result_simple(result, balance):
+    # Preview for primary only
+    primary_result = client.preview_primary_sizing(balance)
+    if not print_result_simple(primary_result, balance):
         hr("END (INSUFFICIENT BALANCE)", i)
-        prev.update({"base": base, "order_type": order_type, "lev": lev, "risk": risk, "entry": entry, "stop": stop})
+        prev.update({
+            "base": base, "order_type": order_type, "lev": lev,
+            "risk": risk, "entry": entry, "stop": stop
+        })
         return
 
     send = input("\n➡️  Send order? (y/N): ").strip().lower() == "y"
     if not send:
         print("⏭️  Skipped.")
         hr("END (SKIPPED)", i)
-        prev.update({"base": base, "order_type": order_type, "lev": lev, "risk": risk, "entry": entry, "stop": stop})
+        prev.update({
+            "base": base, "order_type": order_type, "lev": lev,
+            "risk": risk, "entry": entry, "stop": stop
+        })
         return
 
-    side = "buy" if result["direction"] == "long" else "sell"
-    amount = result["position_size"]
+    side = "buy" if primary_result["direction"] == "long" else "sell"
 
-    resp = execute_market_order(client, side, amount) if order_type == OrderType.MARKET else execute_limit_order(client, side, amount)
-    print(f"✅ Order placed (Loop #{i}):", resp.get("id", resp))
+    # Single call — exchange layer fans out to all accounts internally
+    results = client.submit_all(order_type, side)
+
+    print("\n🚀 Dispatch:")
+    for r in results:
+        if r.get("ok"):
+            print(f" • [{r['name']}] OK  id={r['id']}  amt={r['amount']:.6f}  risk=${r['risk_usd']:,.2f}")
+        else:
+            print(f" • [{r['name']}] ERR {r['error']}")
+
     hr("END (OK)", i)
-
-    prev.update({"base": base, "order_type": order_type, "lev": lev, "risk": risk, "entry": entry, "stop": stop})
+    prev.update({
+        "base": base, "order_type": order_type, "lev": lev,
+        "risk": risk, "entry": entry, "stop": stop
+    })
 
 
 def main():

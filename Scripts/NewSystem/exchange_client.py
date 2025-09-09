@@ -1,35 +1,76 @@
-import ccxt
+﻿import ccxt
 from dependency_injector.wiring import inject, Provide
 from container import Container
 from models import TradeConfig, TradeParams
 from enums import OrderType
+from order_calculator import calculate_position_sizing
 
+# ===== Config (exchange layer owns this) =====
 API_KEY         = "JVyNFG6yyMvD7zucnP"
 API_SECRET      = "9dOWIBweh9EZKCnll6Pc1CSUaJ9xs9CStzSo"
 DEMO_TRADING    = True
 DEFAULT_TYPE    = "future"
+DEFAULT_EXID    = "bybit"
 QUOTE           = "USDT"
 CONTRACT_SUFFIX = ":USDT"
 
-class ExchangeClient:
-    def __init__(
-        self,
-        api_key: str = API_KEY,
-        api_secret: str = API_SECRET,
-        demo_trading: bool = DEMO_TRADING,
-        default_type: str = DEFAULT_TYPE,
-    ):
-        self.exchange = ccxt.bybit({
+# Fill to enable multi-exchange; leave [] → single default.
+ACCOUNTS: list[dict] = [
+    {
+        "name":"BybitTest1", 
+        "exchange_id":"bybit", 
+        "api_key":"JVyNFG6yyMvD7zucnP",
+        "api_secret":"9dOWIBweh9EZKCnll6Pc1CSUaJ9xs9CStzSo", 
+        "demo": True,  
+        "default_type":"future"
+    },
+
+    {
+        "name":"BybitTest2",  
+        "exchange_id":"bybit", 
+        "api_key":"jiSLuypK1EWZK9eHMy",     
+        "api_secret":"ulFbMvZN5b5gXeieuJbhi2F9eXrBahybGaUm", 
+        "demo": True,  
+        "default_type":"future"
+    },
+
+    # {"name":"BybitMain", "exchange_id":"bybit", "api_key":"KEY1", "api_secret":"SEC1", "demo": True,  "default_type":"future"},
+    # {"name":"BybitAlt",  "exchange_id":"bybit", "api_key":"KEY2", "api_secret":"SEC2", "demo": True,  "default_type":"future"},
+]
+DISPLAY_INDEX = 0
+
+class SingleExchangeClient:
+    def __init__(self, *, api_key: str, api_secret: str, demo_trading: bool = DEMO_TRADING,
+                 default_type: str = DEFAULT_TYPE, exchange_id: str = DEFAULT_EXID, name: str | None = None):
+        ex_class = getattr(ccxt, exchange_id)
+        self.exchange = ex_class({
             "apiKey": api_key,
             "secret": api_secret,
             "enableRateLimit": True,
         })
+        self.name = name or getattr(self.exchange, "id", exchange_id)
         self.exchange.enable_demo_trading(bool(demo_trading))
         self.exchange.options["defaultType"] = default_type
-        print(f"Loading markets ({'testnet' if demo_trading else 'live'})...")
+        print(f"Loading markets ({self.name} | {'testnet' if demo_trading else 'live'})...")
         self.exchange.load_markets()
+        self._force_hedge_mode()
         print("Ready.\n")
 
+    def _force_hedge_mode(self):
+        try:
+            self.exchange.set_position_mode(True)  # hedged/dual side
+        except Exception:
+            pass
+        try:
+            if hasattr(self.exchange, "fetch_position_mode"):
+                info = self.exchange.fetch_position_mode()
+                if not bool(info.get("hedged", True)):
+                    try: self.exchange.set_position_mode(True)
+                    except Exception: pass
+        except Exception:
+            pass
+
+    # === calculator relies on these ===
     def symbol_for(self, base: str) -> str:
         return f"{base.strip().upper()}/{QUOTE}{CONTRACT_SUFFIX}"
 
@@ -59,6 +100,10 @@ class ExchangeClient:
             pass
         return None
 
+    @staticmethod
+    def _position_idx_for_side(side: str) -> int:
+        return 1 if side.lower() == "buy" else 2
+
     @inject
     def apply_leverage(
         self,
@@ -69,11 +114,9 @@ class ExchangeClient:
         if desired is None or desired == "" or float(desired) <= 0:
             return {"skipped": "no leverage requested"}
         desired_int = int(float(desired))
-
         current = self.get_current_leverage(config.symbol)
         if current is not None and int(float(current)) == desired_int:
             return {"skipped": "leverage already set"}
-
         try:
             return self.exchange.set_leverage(desired_int, config.symbol)
         except ccxt.BadRequest as e:
@@ -84,9 +127,7 @@ class ExchangeClient:
 
     @inject
     def market_order_with_stop(
-        self,
-        side: str,
-        amount: float,
+        self, side: str, amount: float,
         config: TradeConfig = Provide[Container.trade_config],
         params: TradeParams = Provide[Container.trade_params],
     ):
@@ -96,14 +137,17 @@ class ExchangeClient:
         sl  = self.exchange.price_to_precision(symbol, sl_px)
         return self.exchange.create_order(
             symbol, "market", side, amt, None,
-            {"positionIdx": 1, "stopLoss": sl, "slTriggerBy": "LastPrice", "tpslMode": "Full"}
+            {
+                "positionIdx": self._position_idx_for_side(side),
+                "stopLoss": sl,
+                "slTriggerBy": "LastPrice",
+                "tpslMode": "Full",
+            }
         )
 
     @inject
     def limit_order_with_stop(
-        self,
-        side: str,
-        amount: float,
+        self, side: str, amount: float,
         config: TradeConfig = Provide[Container.trade_config],
         params: TradeParams = Provide[Container.trade_params],
     ):
@@ -117,5 +161,83 @@ class ExchangeClient:
         sl  = self.exchange.price_to_precision(symbol, sl_px)
         return self.exchange.create_order(
             symbol, "limit", side, amt, px,
-            {"postOnly": True, "positionIdx": 1, "stopLoss": sl, "slTriggerBy": "LastPrice", "tpslMode": "Full"}
+            {
+                "postOnly": True,
+                "positionIdx": self._position_idx_for_side(side),
+                "stopLoss": sl,
+                "slTriggerBy": "LastPrice",
+                "tpslMode": "Full",
+            }
         )
+
+class ExchangeClient:
+    def __init__(self):
+        self._clients: list[SingleExchangeClient] = []
+        if ACCOUNTS:
+            for acc in ACCOUNTS:
+                self._clients.append(SingleExchangeClient(
+                    api_key=acc["api_key"],
+                    api_secret=acc["api_secret"],
+                    demo_trading=bool(acc.get("demo", DEMO_TRADING)),
+                    default_type=acc.get("default_type", DEFAULT_TYPE),
+                    exchange_id=acc.get("exchange_id", DEFAULT_EXID),
+                    name=acc.get("name"),
+                ))
+        else:
+            self._clients.append(SingleExchangeClient(
+                api_key=API_KEY, api_secret=API_SECRET,
+                demo_trading=DEMO_TRADING, default_type=DEFAULT_TYPE, exchange_id=DEFAULT_EXID,
+                name="primary",
+            ))
+        self._display_index = DISPLAY_INDEX if DISPLAY_INDEX < len(self._clients) else 0
+
+        # Sanity: fail fast if the class in memory is stale / missing methods
+        required = ("get_balance_usdt", "get_market_price", "get_current_leverage",
+                    "market_order_with_stop", "limit_order_with_stop", "apply_leverage", "symbol_for")
+        for c in self._clients:
+            for attr in required:
+                if not hasattr(c, attr):
+                    raise AttributeError(f"{c.__class__.__name__} missing required method: {attr}")
+
+    @property
+    def primary(self) -> SingleExchangeClient:
+        return self._clients[self._display_index]
+
+    # Proxies used by calculator UI
+    def symbol_for(self, base: str) -> str:
+        return self.primary.symbol_for(base)
+
+    def get_balance_usdt(self) -> float:
+        return self.primary.get_balance_usdt()
+
+    def get_market_price(self, base: str) -> float:
+        return self.primary.get_market_price(base)
+
+    def get_current_leverage(self, symbol: str) -> float | None:
+        return self.primary.get_current_leverage(symbol)
+
+    def name(self) -> str:
+        return self.primary.name
+
+    # Preview (calculator prints it)
+    def preview_primary_sizing(self, balance_usdt: float) -> dict:
+        return calculate_position_sizing(balance_usdt)
+
+    # Fan-out dispatch hidden from calculator
+    def submit_all(self, order_type: OrderType, side: str) -> list[dict]:
+        results: list[dict] = []
+        for c in self._clients:
+            try:
+                bal = c.get_balance_usdt()
+                sizing = calculate_position_sizing(bal)
+                amt = sizing["position_size"]; r_usd = sizing["risk_usdt"]
+                c.apply_leverage()
+                if order_type == OrderType.MARKET:
+                    resp = c.market_order_with_stop(side=side, amount=amt)
+                else:
+                    resp = c.limit_order_with_stop(side=side, amount=amt)
+                oid = resp.get("id", resp)
+                results.append({"name": c.name, "ok": True, "id": oid, "amount": amt, "risk_usd": r_usd})
+            except Exception as e:
+                results.append({"name": c.name, "ok": False, "error": str(e)})
+        return results
