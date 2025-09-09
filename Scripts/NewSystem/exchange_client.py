@@ -41,13 +41,46 @@ class ExchangeClient:
         symbol = self.symbol_for(base)
         return float(self.exchange.fetch_ticker(symbol)["last"])
 
+    def get_current_leverage(self, symbol: str) -> float | None:
+        try:
+            try:
+                positions = self.exchange.fetch_positions([symbol])
+            except Exception:
+                positions = self.exchange.fetch_positions()
+            if isinstance(positions, list):
+                for p in positions:
+                    if p.get("symbol") == symbol:
+                        lev = p.get("leverage") or (p.get("info", {}) or {}).get("leverage")
+                        return float(lev) if lev else None
+            elif isinstance(positions, dict):
+                lev = positions.get("leverage") or (positions.get("info", {}) or {}).get("leverage")
+                return float(lev) if lev else None
+        except Exception:
+            pass
+        return None
+
     @inject
     def apply_leverage(
         self,
         config: TradeConfig = Provide[Container.trade_config],
         params: TradeParams = Provide[Container.trade_params],
     ):
-        return self.exchange.set_leverage(int(params.leverage), config.symbol)
+        desired = params.leverage
+        if desired is None or desired == "" or float(desired) <= 0:
+            return {"skipped": "no leverage requested"}
+        desired_int = int(float(desired))
+
+        current = self.get_current_leverage(config.symbol)
+        if current is not None and int(float(current)) == desired_int:
+            return {"skipped": "leverage already set"}
+
+        try:
+            return self.exchange.set_leverage(desired_int, config.symbol)
+        except ccxt.BadRequest as e:
+            msg = str(e)
+            if "110043" in msg or "leverage not modified" in msg.lower():
+                return {"ignored": "leverage not modified"}
+            raise
 
     @inject
     def market_order_with_stop(

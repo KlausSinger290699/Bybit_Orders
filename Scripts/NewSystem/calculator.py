@@ -32,23 +32,24 @@ def print_result_simple(result, balance):
     except Exception:
         pass
     return True
-    
+
 def choose_order_type() -> OrderType:
     print("\nOrder Type:")
     print("1) Market")
     print("2) Limit")
     return OrderType.MARKET if input("Choose (1/2): ").strip() == "1" else OrderType.LIMIT
-    
+
 def execute_market_order(client: ExchangeClient, side: str, amount: float):
     client.apply_leverage()
     return client.market_order_with_stop(side=side, amount=amount)
-    
+
 def execute_limit_order(client: ExchangeClient, side: str, amount: float):
     client.apply_leverage()
     return client.limit_order_with_stop(side=side, amount=amount)
-    
+
 def main():
     client = ExchangeClient()
+
     base = input("🔤 Base symbol (e.g., RUNE): ").strip()
     order_type = choose_order_type()
 
@@ -56,8 +57,20 @@ def main():
     live_price = client.get_market_price(base)
     header(base, live_price, balance)
 
+    symbol_full = client.symbol_for(base)
+
     stop = float(input("🛑 Stop Loss Price   : ").strip())
-    lev  = float(input("⚙️  Leverage          : ").strip())
+
+    lev_raw = input("⚙️  Leverage (optional, Enter = use current) : ").strip()
+    if lev_raw:
+        lev = float(lev_raw)
+        show_lev = lev
+    else:
+        current = client.get_current_leverage(symbol_full)
+        lev = current if current and current > 0 else 1
+        show_lev = lev
+        print(f"⚙️  Leverage          : {show_lev} (using current/default)")
+
     risk = float(input("⚠️  Risk %            : ").strip())
 
     if order_type == OrderType.LIMIT:
@@ -66,10 +79,9 @@ def main():
         entry = live_price
         print(f"🎯 Entry Price       : {entry}")
 
-    symbol_full = client.symbol_for(base)
-
     trade  = TradeConfig(simulate_mode=DEMO_TRADING, symbol=symbol_full, order_type=order_type)
     params = TradeParams(stop_loss_price=stop, risk_percent=risk, leverage=lev, entry_price=entry)
+
     wire_for(trade, params, modules=[order_calculator, exchange_client_module])
 
     result = calculate_position_sizing(balance)
