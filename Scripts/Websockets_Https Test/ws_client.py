@@ -1,34 +1,30 @@
-﻿import asyncio, json, time, random
+﻿# ws_client.py
+import asyncio, json, time, random
 import websockets
 
-TF_CHOICES = ["1", "5", "15", "30"]  # minutes
+TF_CHOICES = ["1", "5", "15", "30"]
 
 def make_event():
-    side = random.choice(["bull", "bear"])
     tf = random.choice(TF_CHOICES)
-    status = "?"  # keep as your pending marker
     start = int(time.time())
-    end = start + int(tf) * 60
     return {
         "source": "test",
-        "side": side,
-        "status": status,
+        "side": random.choice(["bull", "bear"]),
+        "status": "?",
         "tf": tf,
         "start": start,
-        "end": end,
+        "end": start + int(tf)*60,
     }
 
 async def run():
     uri = "ws://127.0.0.1:8765"
     print(f"🔌 Connecting to {uri} ...")
-    async with websockets.connect(uri) as ws:
+    # (optional) tune pings on client side too
+    async with websockets.connect(uri, ping_interval=20, ping_timeout=20) as ws:
         print("✅ Connected.")
-        print("↩️  Press ENTER to send a random CVD event (bull/bear). Type 'q' + ENTER to quit.")
+        print("↩️  Press ENTER to send a random CVD event. Type 'q' and ENTER to quit.")
         while True:
-            try:
-                user = input()
-            except (EOFError, KeyboardInterrupt):
-                break
+            user = await asyncio.to_thread(input)   # <-- non-blocking
             if user.strip().lower() == "q":
                 break
 
