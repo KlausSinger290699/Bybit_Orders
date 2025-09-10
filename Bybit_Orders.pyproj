@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Websockets_Https Test\ws_server.py</StartupFile>
+    <StartupFile>Scripts\Websockets_Https_Test\ws_server.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -59,12 +59,12 @@
     <Compile Include="Scripts\OldSystem\test_presets.py" />
     <Compile Include="Scripts\OldSystem\trade_executor.py" />
     <Compile Include="Scripts\OldSystem\enums.py" />
-    <Compile Include="Scripts\Websockets_Https Test\http_client.py" />
-    <Compile Include="Scripts\Websockets_Https Test\http_server.py" />
-    <Compile Include="Scripts\Websockets_Https Test\http_simple_client.py" />
-    <Compile Include="Scripts\Websockets_Https Test\ws_client.py" />
-    <Compile Include="Scripts\Websockets_Https Test\ws_server.py" />
-    <Compile Include="Scripts\Websockets_Https Test\ws_simple_client.py" />
+    <Compile Include="Scripts\Websockets_Https_Test\http_client.py" />
+    <Compile Include="Scripts\Websockets_Https_Test\http_server.py" />
+    <Compile Include="Scripts\Websockets_Https_Test\http_simple_client.py" />
+    <Compile Include="Scripts\Websockets_Https_Test\ws_client.py" />
+    <Compile Include="Scripts\Websockets_Https_Test\ws_server.py" />
+    <Compile Include="Scripts\Websockets_Https_Test\ws_simple_client.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
@@ -73,12 +73,12 @@
     <Content Include="Scripts\OldSystem\.gitkeep" />
     <Content Include="Scripts\SecurityCopy\.gitkeep" />
     <Content Include="Scripts\Tests\.gitkeep" />
-    <Content Include="Scripts\Websockets_Https Test\.gitkeep" />
+    <Content Include="Scripts\Websockets_Https_Test\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Scripts\" />
     <Folder Include="Scripts\Functioning_Tests\" />
-    <Folder Include="Scripts\Websockets_Https Test\" />
+    <Folder Include="Scripts\Websockets_Https_Test\" />
     <Folder Include="Scripts\SecurityCopy\" />
     <Folder Include="Scripts\NewSystem\" />
     <Folder Include="Scripts\OldSystem\" />
