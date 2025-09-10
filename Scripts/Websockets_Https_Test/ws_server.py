@@ -4,38 +4,22 @@ import websockets
 
 SERVE_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
 ROLE = "SERVER"
-URI = "ws://127.0.0.1:8765"
 
-# ===== uniform logs =====
 def _fmt_reason(code, reason):
     r = (reason or "").strip()
     return f"code={code if code is not None else '?'} reason={r if r else '<none>'}"
 
-def log_starting():
-    print(f"🚀 [{ROLE}] Starting ...")
-
-def log_waiting():
-    print(f"⏳ [{ROLE}] Waiting ...")
-
+def log_starting():    print(f"🚀 [{ROLE}] Starting ...")
+def log_waiting():     print(f"⏳ [{ROLE}] Waiting ...")
 def log_connected():
     print(f"✅ [{ROLE}] Connected.")
     print(f"🟢 [{ROLE}] Ready.")
+def log_disconnected(code, reason): print(f"🔌 [{ROLE}] Disconnected: {_fmt_reason(code, reason)}")
+def log_recv_raw(msg):             print(f"📥 [{ROLE}] Received (raw): {msg}")
+def log_recv_summary(side, tf, status): print(f"📥 [{ROLE}] Received (summary): {side} {tf}m ({status})")
+def log_sent_json(reply):          print(f"📤 [{ROLE}] Sent back (json): {reply}\n")
 
-def log_disconnected(code, reason):
-    print(f"🔌 [{ROLE}] Disconnected: {_fmt_reason(code, reason)}")
-
-def log_recv_raw(msg):
-    print(f"📥 [{ROLE}] Received (raw): {msg}")
-
-def log_recv_summary(side, tf, status):
-    print(f"📥 [{ROLE}] Received (summary): {side} {tf}m ({status})")
-
-def log_sent_json(reply):
-    print(f"📤 [{ROLE}] Sent back (json): {reply}\n")
-
-# ===== app =====
 async def handler(ws):
-    # On new client, emit the exact same connect block as client
     log_connected()
     try:
         async for msg in ws:
@@ -65,7 +49,6 @@ async def handler(ws):
 async def main():
     log_starting()
     async with websockets.serve(handler, "127.0.0.1", 8765, **SERVE_KW):
-        # Server is "waiting" until a client arrives
         log_waiting()
         await asyncio.Future()
 
