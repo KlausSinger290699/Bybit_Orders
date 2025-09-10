@@ -1,4 +1,4 @@
-﻿# ws_client.py
+﻿# emitter.py
 import asyncio, json, time, random
 from contextlib import suppress
 import websockets
@@ -8,12 +8,19 @@ URI = "ws://127.0.0.1:8765"
 TF_CHOICES = ["1", "5", "15", "30"]
 CONNECT_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
 
-log = UniformLogger("CLIENT")
+log = UniformLogger("EMITTER")
 
 def make_event():
     tf = random.choice(TF_CHOICES)
     now = int(time.time())
-    return {"source":"test","side":random.choice(["bull","bear"]),"status":"?","tf":tf,"start":now,"end":now+int(tf)*60}
+    return {
+        "source": "test",
+        "side": random.choice(["bull", "bear"]),
+        "status": "?",
+        "tf": tf,
+        "start": now,
+        "end": now + int(tf) * 60,
+    }
 
 async def stdin_reader(queue: asyncio.Queue):
     while True:
@@ -58,10 +65,10 @@ async def session(ws, in_q: asyncio.Queue) -> bool:
             reply = await ws.recv()
             log.got_reply(reply)
         except websockets.ConnectionClosedOK as ex:
-            log.disconnected(getattr(ex,"code",None), getattr(ex,"reason",""))
+            log.disconnected(getattr(ex, "code", None), getattr(ex, "reason", ""))
             return False
         except websockets.ConnectionClosedError as ex:
-            log.disconnected(getattr(ex,"code",None), getattr(ex,"reason",""))
+            log.disconnected(getattr(ex, "code", None), getattr(ex, "reason", ""))
             return False
         except (ConnectionResetError, OSError) as ex:
             log.disconnected(None, str(ex))

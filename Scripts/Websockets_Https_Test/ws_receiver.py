@@ -1,11 +1,11 @@
-﻿# ws_server.py
+﻿# receiver.py
 import asyncio, json
 import websockets
 from log_uniform import UniformLogger
 
 SERVE_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
 
-log = UniformLogger("SERVER")
+log = UniformLogger("RECEIVER")
 
 async def handler(ws):
     log.connected()
@@ -16,12 +16,12 @@ async def handler(ws):
         async for msg in ws:
             log.recv_raw(msg)
             data = json.loads(msg)
-            side = str(data.get("side","")).upper()
-            tf = data.get("tf","?")
-            status = data.get("status","?")
+            side = str(data.get("side", "")).upper()
+            tf = data.get("tf", "?")
+            status = data.get("status", "?")
             log.recv_summary(side, tf, status)
 
-            reply = json.dumps({"message": f"Server received {side} {tf}m ({status})"})
+            reply = json.dumps({"message": f"Receiver got {side} {tf}m ({status})"})
             await ws.send(reply)
             log.sent_json(reply)
     except websockets.ConnectionClosedOK as e:
