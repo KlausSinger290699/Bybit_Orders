@@ -41,33 +41,29 @@ def calculate_position_sizing(
     }
 
 
-# ---- NEW: Pyramid planner (pure function, no DI) ----
+# ---- Pyramid planner (pure, no DI) with risk_shape switch ----
 def plan_pyramid_tranches(
     *,
     balance_usdt: float,
     risk_percent: float,
     stop_price: float,
     leverage: float,
-    top_price: float | None,     # None → use live price as "top"
+    top_price: float | None,
     bottom_price: float,
     live_price: float,
-    levels: int,                 # number of limit levels (excludes immediate market tranche)
-    immediate_risk_pct: float,   # 0..100 of total risk, done as market at live_price
+    levels: int,
+    immediate_risk_pct: float,
+    risk_shape: float = 1.0,  # 0 = equal risk per level (risk square → size pyramid), 1 = linear bottom-heavy risk
 ) -> dict:
     """
-    Returns a plan dict with:
+    Returns:
       {
         'side': 'long'|'short',
         'total_risk': float,
-        'tranches': [
-           {'type':'market'|'limit','price':float,'risk_usdt':float,'qty':float,'notional':float}
-        ],
-        'totals': {'risk':float,'notional':float,'margin':float}
+        'tranches': [{'type':'market'|'limit','price':float,'risk_usdt':float,'qty':float,'notional':float}],
+        'totals': {'risk':float,'notional':float,'margin':float},
+        'meta': {'risk_shape': float}
       }
-    Rules:
-      - Heavier risk near the bottom (better R:R): linear weights 1..levels (bottom has max weight).
-      - Market tranche is optional and uses live_price, consuming immediate_risk_pct of total risk.
-      - For LONG: stop < bottom < top; For SHORT: stop > bottom > top. Raises ValueError otherwise.
     """
     if leverage <= 0:
         raise ValueError("Leverage must be greater than 0.")
@@ -79,7 +75,9 @@ def plan_pyramid_tranches(
     if stop_price <= 0 or bottom_price <= 0 or (top_price is not None and top_price <= 0) or live_price <= 0:
         raise ValueError("Prices must be > 0.")
 
-    # Determine side and sanitize top
+    s = max(0.0, min(1.0, float(risk_shape)))
+    imm_pct = max(0.0, min(100.0, float(immediate_risk_pct)))
+
     eff_top = top_price if top_price is not None else live_price
     if bottom_price < eff_top and stop_price < bottom_price:
         side = "long"
@@ -88,16 +86,17 @@ def plan_pyramid_tranches(
     else:
         raise ValueError("Invalid pyramid: expected LONG (stop < bottom < top) or SHORT (stop > bottom > top).")
 
-    # Market (immediate) tranche
     tranches: list[dict] = []
-    immediate_risk = max(0.0, min(100.0, immediate_risk_pct)) / 100.0 * total_risk
+
+    # 🟢 Immediate tranche
+    immediate_risk = imm_pct / 100.0 * total_risk
     remaining_risk = total_risk - immediate_risk
 
     if immediate_risk > 0:
-        risk_per_unit = abs(live_price - stop_price)
-        if risk_per_unit <= 0:
+        rpu = abs(live_price - stop_price)
+        if rpu <= 0:
             raise ValueError("Live price equals stop loss; cannot size market tranche.")
-        qty = immediate_risk / risk_per_unit
+        qty = immediate_risk / rpu
         tranches.append({
             "type": "market",
             "price": live_price,
@@ -106,31 +105,34 @@ def plan_pyramid_tranches(
             "notional": qty * live_price,
         })
 
-    # Grid prices from top -> bottom for limit orders
     if levels > 0:
-        # Prices descending for long, ascending for short
+        # ladder (top → bottom)
         if side == "long":
-            start = eff_top
-            end = bottom_price
+            start, end = eff_top, bottom_price
             if end >= start:
                 raise ValueError("For LONG, bottom must be < top.")
             grid = [start - (start - end) * (i / levels) for i in range(1, levels + 1)]
         else:
-            start = eff_top
-            end = bottom_price
+            start, end = eff_top, bottom_price
             if end <= start:
                 raise ValueError("For SHORT, bottom must be > top.")
             grid = [start + (end - start) * (i / levels) for i in range(1, levels + 1)]
 
-        # Linear weights 1..levels (bottom = largest weight)
-        weights = [i for i in range(1, levels + 1)]
-        wsum = float(sum(weights))
-        for price, w in zip(grid, weights):
-            risk_i = remaining_risk * (w / wsum)
-            risk_per_unit = abs(price - stop_price)
-            if risk_per_unit <= 0:
+        # risk sharing: blend equal vs. linear(1..L)
+        if levels == 1:
+            shares = [1.0]
+        else:
+            wsum = levels * (levels + 1) / 2  # sum 1..L
+            shares = [ (1.0 - s) * (1.0 / levels) + s * (i / wsum) for i in range(1, levels + 1) ]
+        scale = 1.0 / sum(shares) if shares else 1.0
+        shares = [x * scale for x in shares]
+
+        for price, share in zip(grid, shares):
+            risk_i = remaining_risk * share
+            rpu = abs(price - stop_price)
+            if rpu <= 0:
                 raise ValueError("Entry price equals stop loss; invalid level.")
-            qty = risk_i / risk_per_unit
+            qty = risk_i / rpu
             tranches.append({
                 "type": "limit",
                 "price": price,
@@ -139,7 +141,6 @@ def plan_pyramid_tranches(
                 "notional": qty * price,
             })
 
-    # Totals
     total_notional = sum(t["notional"] for t in tranches)
     total_margin = total_notional / leverage if leverage > 0 else 0.0
 
@@ -152,4 +153,5 @@ def plan_pyramid_tranches(
             "notional": round(total_notional, 2),
             "margin": round(total_margin, 2),
         },
+        "meta": {"risk_shape": s},
     }

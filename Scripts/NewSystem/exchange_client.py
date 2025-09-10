@@ -36,15 +36,15 @@ class SingleExchangeClient:
         print("Ready.\n")
 
     # ---- basics ----
-    def symbol_for(self, base: str) -> str:
-        return f"{base.strip().upper()}/{QUOTE}{CONTRACT_SUFFIX}"
+    def symbol_for(self, ticker: str) -> str:
+        return f"{ticker.strip().upper()}/{QUOTE}{CONTRACT_SUFFIX}"
 
     def get_balance_usdt(self) -> float:
         bal = self.exchange.fetch_balance()
         return float(bal["total"]["USDT"])
 
-    def get_market_price(self, base: str) -> float:
-        symbol = self.symbol_for(base)
+    def get_market_price(self, ticker: str) -> float:
+        symbol = self.symbol_for(ticker)
         return float(self.exchange.fetch_ticker(symbol)["last"])
 
     def get_current_leverage(self, symbol: str) -> float | None:
@@ -90,7 +90,6 @@ class SingleExchangeClient:
 
     # ---- leverage (non-DI, explicit) ----
     def set_leverage(self, *, symbol: str, leverage: float):
-        """Non-DI: set leverage explicitly for pyramid or any call where DI isn't wired."""
         if leverage is None or float(leverage) <= 0:
             return {"skipped": "no leverage requested"}
         lev_int = int(float(leverage))
@@ -254,7 +253,10 @@ class ExchangeClient:
             ))
         self._display_index = DISPLAY_INDEX if DISPLAY_INDEX < len(self._clients) else 0
 
-        required = ("get_balance_usdt","get_market_price","get_current_leverage","market_order_with_stop","limit_order_with_stop","apply_leverage","symbol_for","fetch_open_orders","cancel_order_by_key","cancel_all_ours","cancel_all_open_orders","close_all_positions","create_market_with_stop","create_limit_with_stop","set_leverage")
+        required = ("get_balance_usdt","get_market_price","get_current_leverage","market_order_with_stop",
+                    "limit_order_with_stop","apply_leverage","symbol_for","fetch_open_orders",
+                    "cancel_order_by_key","cancel_all_ours","cancel_all_open_orders","close_all_positions",
+                    "create_market_with_stop","create_limit_with_stop","set_leverage")
         for c in self._clients:
             for attr in required:
                 if not hasattr(c, attr):
@@ -262,9 +264,9 @@ class ExchangeClient:
 
     @property
     def primary(self) -> SingleExchangeClient: return self._clients[self._display_index]
-    def symbol_for(self, base: str) -> str:     return self.primary.symbol_for(base)
+    def symbol_for(self, ticker: str) -> str:  return self.primary.symbol_for(ticker)
     def get_balance_usdt(self) -> float:        return self.primary.get_balance_usdt()
-    def get_market_price(self, base: str) -> float: return self.primary.get_market_price(base)
+    def get_market_price(self, ticker: str) -> float: return self.primary.get_market_price(ticker)
     def get_current_leverage(self, symbol: str) -> float | None: return self.primary.get_current_leverage(symbol)
     def name(self) -> str:                      return self.primary.name
     def preview_primary_sizing(self, balance_usdt: float) -> dict: return calculate_position_sizing(balance_usdt)
@@ -287,7 +289,7 @@ class ExchangeClient:
                 results.append({"name": c.name, "ok": False, "error": str(e)})
         return results
 
-    # ---- pyramid across all accounts (uses explicit set_leverage) ----
+    # ---- pyramid across all accounts (passes risk_shape) ----
     def submit_pyramid(
         self,
         *,
@@ -300,6 +302,7 @@ class ExchangeClient:
         levels: int,
         immediate_risk_pct: float,
         post_only_limits: bool = True,
+        risk_shape: float = 1.0,
     ) -> list[dict]:
         symbol = self.symbol_for(base)
         group_key = f"PYR-{int(time.time()*1000)}"
@@ -310,7 +313,6 @@ class ExchangeClient:
                 bal = c.get_balance_usdt()
                 live_px = c.get_market_price(base)
 
-                # plan per-account based on its balance
                 plan = plan_pyramid_tranches(
                     balance_usdt=bal,
                     risk_percent=risk_percent,
@@ -321,10 +323,10 @@ class ExchangeClient:
                     live_price=live_px,
                     levels=levels,
                     immediate_risk_pct=immediate_risk_pct,
+                    risk_shape=risk_shape,
                 )
                 side = "buy" if plan["side"] == "long" else "sell"
 
-                # set leverage explicitly (no DI required)
                 c.set_leverage(symbol=symbol, leverage=leverage)
 
                 placed = []
@@ -343,6 +345,7 @@ class ExchangeClient:
                     "levels": levels,
                     "immediate_pct": immediate_risk_pct,
                     "totals": plan["totals"],
+                    "shape": plan["meta"]["risk_shape"],
                     "orders": placed,
                 })
             except Exception as e:
