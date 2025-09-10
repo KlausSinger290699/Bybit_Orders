@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Websockets_Https_Test\ws_client.py</StartupFile>
+    <StartupFile>Scripts\Websockets_Https_Test\ws_server.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -62,6 +62,7 @@
     <Compile Include="Scripts\Websockets_Https_Test\http_client.py" />
     <Compile Include="Scripts\Websockets_Https_Test\http_server.py" />
     <Compile Include="Scripts\Websockets_Https_Test\http_simple_client.py" />
+    <Compile Include="Scripts\Websockets_Https_Test\log_uniform.py" />
     <Compile Include="Scripts\Websockets_Https_Test\ws_client.py" />
     <Compile Include="Scripts\Websockets_Https_Test\ws_server.py" />
     <Compile Include="Scripts\Websockets_Https_Test\ws_simple_client.py" />
