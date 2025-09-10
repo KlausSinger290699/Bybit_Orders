@@ -1,116 +1,128 @@
-﻿# ws_client.py (auto-reconnect while idle; robust stdin; Py 3.11-safe)
+﻿# ws_client.py — STRICT UNIFORM LOGS (no "Connecting", no seconds; Py 3.11-safe)
 import asyncio, json, time, random
 from contextlib import suppress
 import websockets
 
-TF_CHOICES = ["1", "5", "15", "30"]
 URI = "ws://127.0.0.1:8765"
-
+TF_CHOICES = ["1", "5", "15", "30"]
 CONNECT_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
+ROLE = "CLIENT"
 
+# ===== uniform logs =====
+def _fmt_reason(code, reason):
+    r = (reason or "").strip()
+    return f"code={code if code is not None else '?'} reason={r if r else '<none>'}"
+
+def log_starting():
+    print(f"🚀 [{ROLE}] Starting ...")
+
+def log_waiting():
+    print(f"⏳ [{ROLE}] Waiting ...")
+
+def log_connected():
+    print(f"✅ [{ROLE}] Connected.")
+    print(f"🟢 [{ROLE}] Ready.")
+
+def log_prompt():
+    print("↩️  Press ENTER to send a random CVD event. Type 'q' + ENTER to quit.")
+
+def log_disconnected(code, reason):
+    print(f"🔌 [{ROLE}] Disconnected: {_fmt_reason(code, reason)}")
+
+def log_send_summary(side, tf, status):
+    print(f"📤 [{ROLE}] Sent (summary): {side.upper()} {tf}m ({status})")
+
+def log_send_json(wire):
+    print(f"📤 [{ROLE}] Sent (json)   : {wire}")
+
+def log_got_reply(reply):
+    print(f"📨 [{ROLE}] Got reply (raw): {reply}\n")
+
+# ===== app =====
 def make_event():
     tf = random.choice(TF_CHOICES)
-    start = int(time.time())
-    return {
-        "source": "test",
-        "side": random.choice(["bull", "bear"]),
-        "status": "?",
-        "tf": tf,
-        "start": start,
-        "end": start + int(tf) * 60,
-    }
+    now = int(time.time())
+    return {"source":"test","side":random.choice(["bull","bear"]),"status":"?","tf":tf,"start":now,"end":now+int(tf)*60}
 
 async def _stdin_reader(q: asyncio.Queue):
-    """Single background stdin reader; pushes lines into a queue."""
     while True:
-        # input() blocks in a thread; this task stays alive for the whole program
         line = await asyncio.to_thread(input)
         await q.put(line)
 
 async def talk(ws, in_q: asyncio.Queue) -> bool:
-    """Return True if user quit intentionally, False if connection dropped."""
-    print("✅ Connected.")
-    print("↩️  Press ENTER to send a random CVD event. Type 'q' + ENTER to quit.")
+    log_connected()
+    log_prompt()
 
     while True:
-        # Race user input vs socket closing
         input_task = asyncio.create_task(in_q.get())
         closed_task = asyncio.create_task(ws.wait_closed())
-
-        done, pending = await asyncio.wait(
-            {input_task, closed_task},
-            return_when=asyncio.FIRST_COMPLETED,
-        )
+        done, pending = await asyncio.wait({input_task, closed_task}, return_when=asyncio.FIRST_COMPLETED)
 
         if closed_task in done:
-            # Server closed while idle → reconnect
-            # Cancel the waiting input_task cleanly (reader task keeps running)
             if input_task in pending:
                 input_task.cancel()
                 with suppress(asyncio.CancelledError):
                     await input_task
-            code = getattr(ws, "close_code", None)
-            reason = getattr(ws, "close_reason", "")
-            print(f"🔌 Server connection ended while idle: code={code} reason={reason}")
+            log_disconnected(ws.close_code, getattr(ws, "close_reason", ""))
+            log_waiting()
             return False
 
-        # We got user input
-        # Cancel the closed watcher (it will raise CancelledError on await)
         if closed_task in pending:
             closed_task.cancel()
             with suppress(asyncio.CancelledError):
                 await closed_task
 
-        user = input_task.result()
-        if user.strip().lower() == "q":
-            try:
+        user = input_task.result().strip().lower()
+        if user == "q":
+            with suppress(Exception):
                 await ws.close(code=1000, reason="client quits")
-            except Exception:
-                pass
-            print("👋 Client closing connection...")
+            print("👋 [CLIENT] Closing by user request.")
             return True
 
-        # Send a random event and wait for reply
         e = make_event()
         wire = json.dumps(e)
         try:
             await ws.send(wire)
-            print(f"📤 Sent (summary): {e['side'].upper()} {e['tf']}m ({e['status']})")
-            print(f"📤 Sent (json)   : {wire}")
+            log_send_summary(e["side"], e["tf"], e["status"])
+            log_send_json(wire)
             reply = await ws.recv()
-            print(f"📨 Got reply (raw): {reply}\n")
+            log_got_reply(reply)
         except websockets.ConnectionClosedOK as ex:
-            print(f"👋 Server closed cleanly: code={getattr(ex, 'code', '?')} reason={getattr(ex, 'reason', '?')}")
+            log_disconnected(getattr(ex,"code",None), getattr(ex,"reason",""))
+            log_waiting()
             return False
         except websockets.ConnectionClosedError as ex:
-            print(f"🔌 Server connection error: code={getattr(ex, 'code', '?')} reason={getattr(ex, 'reason', '?')}")
+            log_disconnected(getattr(ex,"code",None), getattr(ex,"reason",""))
+            log_waiting()
             return False
         except (ConnectionResetError, OSError) as ex:
-            print("🔌 Network dropped during send/recv:", ex)
+            log_disconnected(None, str(ex))
+            log_waiting()
             return False
 
 async def run():
+    log_starting()
     in_q = asyncio.Queue()
     reader_task = asyncio.create_task(_stdin_reader(in_q))
-
     backoff = 1
     try:
         while True:
+            # attempt silently; only "Waiting ..." (above) and "Connected" are shown
             try:
-                print(f"🔌 Connecting to {URI} ...")
                 async with websockets.connect(URI, **CONNECT_KW) as ws:
+                    backoff = 1
                     user_quit = await talk(ws, in_q)
                     if user_quit:
-                        break  # exit program
-            except (ConnectionRefusedError, OSError) as ex:
-                print(f"⏳ Cannot connect ({ex}). Retrying in {backoff}s ...")
+                        break
+            except (ConnectionRefusedError, OSError):
+                # still not available; print the single uniform waiting line once per cycle
+                log_waiting()
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 10)
-            except KeyboardInterrupt:
-                print("\n🟥 Client stopped by user")
-                break
             else:
-                backoff = 1  # reset after a successful session
+                # disconnected and we printed "Waiting ..." already in talk()
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 10)
     finally:
         reader_task.cancel()
         with suppress(asyncio.CancelledError):

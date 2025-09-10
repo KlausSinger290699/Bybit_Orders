@@ -1,50 +1,76 @@
-﻿import asyncio, json
+﻿# ws_server.py — STRICT UNIFORM LOGS (mirrors client wording exactly)
+import asyncio, json
 import websockets
 
-# Optional: tune keepalive + close timeout
 SERVE_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
+ROLE = "SERVER"
+URI = "ws://127.0.0.1:8765"
 
+# ===== uniform logs =====
+def _fmt_reason(code, reason):
+    r = (reason or "").strip()
+    return f"code={code if code is not None else '?'} reason={r if r else '<none>'}"
+
+def log_starting():
+    print(f"🚀 [{ROLE}] Starting ...")
+
+def log_waiting():
+    print(f"⏳ [{ROLE}] Waiting ...")
+
+def log_connected():
+    print(f"✅ [{ROLE}] Connected.")
+    print(f"🟢 [{ROLE}] Ready.")
+
+def log_disconnected(code, reason):
+    print(f"🔌 [{ROLE}] Disconnected: {_fmt_reason(code, reason)}")
+
+def log_recv_raw(msg):
+    print(f"📥 [{ROLE}] Received (raw): {msg}")
+
+def log_recv_summary(side, tf, status):
+    print(f"📥 [{ROLE}] Received (summary): {side} {tf}m ({status})")
+
+def log_sent_json(reply):
+    print(f"📤 [{ROLE}] Sent back (json): {reply}\n")
+
+# ===== app =====
 async def handler(ws):
-    peer = ws.remote_address
-    print("✅ Server: client connected", peer, "\n")
+    # On new client, emit the exact same connect block as client
+    log_connected()
     try:
         async for msg in ws:
             try:
-                print(f"📥 Received (raw): {msg}")
+                log_recv_raw(msg)
                 data = json.loads(msg)
-                side = data.get("side"); tf = data.get("tf"); status = data.get("status")
-                print(f"📥 Received (summary): {side.upper()} {tf}m ({status})")
+                side = str(data.get("side","")).upper()
+                tf = data.get("tf","?")
+                status = data.get("status","?")
+                log_recv_summary(side, tf, status)
 
-                reply_wire = json.dumps({"message": f"Server received {side.upper()} {tf}m ({status})"})
-                # Send might fail if client died between recv and send → guard it.
-                try:
-                    await ws.send(reply_wire)
-                    print(f"📤 Sent back (json): {reply_wire}\n")
-                except (websockets.ConnectionClosedOK, websockets.ConnectionClosedError):
-                    # Client closed in between; just stop the handler cleanly
-                    break
-                except (ConnectionResetError, OSError) as e:
-                    print("🔌 Send failed (client dropped):", e)
-                    break
+                reply = json.dumps({"message": f"Server received {side} {tf}m ({status})"})
+                await ws.send(reply)
+                log_sent_json(reply)
             except json.JSONDecodeError:
-                print("⚠️ Bad message: not JSON")
+                print(f"⚠️ [{ROLE}] Bad message: not JSON")
     except websockets.ConnectionClosedOK as e:
-        print(f"👋 Client closed cleanly: code={e.code} reason={e.reason}\n")
+        log_disconnected(e.code, e.reason)
+        log_waiting()
     except websockets.ConnectionClosedError as e:
-        print(f"🔌 Client connection error: code={e.code} reason={e.reason}\n")
+        log_disconnected(e.code, e.reason)
+        log_waiting()
     except (ConnectionResetError, OSError) as e:
-        print("🔌 Client network dropped:", e, "\n")
-    finally:
-        # Nothing else to do; handler ends and server keeps running for others
-        pass
+        log_disconnected(None, str(e))
+        log_waiting()
 
 async def main():
+    log_starting()
     async with websockets.serve(handler, "127.0.0.1", 8765, **SERVE_KW):
-        print("🔊 WS server listening on ws://127.0.0.1:8765")
+        # Server is "waiting" until a client arrives
+        log_waiting()
         await asyncio.Future()
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n🟥 Server stopped by user")
+        print("\n🟥 [SERVER] Stopped by user.")
