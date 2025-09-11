@@ -1,12 +1,8 @@
-# div_receiver.py
+# receiver.py
 import asyncio, json
 import websockets
 from log_uniform import UniformLogger
 
-HOST = "127.0.0.1"
-PORT = 8765
-
-# WS timings to match the emitters
 SERVE_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
 
 log = UniformLogger("RECEIVER")
@@ -25,32 +21,29 @@ async def handler(ws):
                 log.recv_summary("BADJSON", "?", f"{e}")
                 continue
 
-            # Accept only our emitter messages (source == "aggr")
-            if data.get("source") != "aggr":
-                log.recv_summary("IGNORED", str(data.get("tf", "?")), "not-aggr")
-                continue
-
-            side = str(data.get("side", "?")).upper()
-            status = str(data.get("status", "?"))
-            tf = str(data.get("tf", "?"))
+            # Your original behavior (no 'source' filter)
+            side = str(data.get("side", "")).upper()
+            tf = data.get("tf", "?")
+            status = data.get("status", "?")
             log.recv_summary(side, tf, status)
 
-            # Echo back ACK so browser console can confirm
-            ack = {"ack": True, "received": data}
-            wire = json.dumps(ack)
-            await ws.send(wire)
-            log.sent_json(wire)
+            reply = json.dumps({"message": f"Receiver got {side} {tf}m ({status})"})
+            await ws.send(reply)
+            log.sent_json(reply)
 
     except websockets.ConnectionClosedOK as e:
-        log.disconnected(e.code, e.reason); log.waiting()
+        log.disconnected(e.code, e.reason)
+        log.waiting()
     except websockets.ConnectionClosedError as e:
-        log.disconnected(e.code, e.reason); log.waiting()
+        log.disconnected(e.code, e.reason)
+        log.waiting()
     except (ConnectionResetError, OSError) as e:
-        log.disconnected(None, str(e));     log.waiting()
+        log.disconnected(None, str(e))
+        log.waiting()
 
 async def main():
     log.starting()
-    async with websockets.serve(handler, HOST, PORT, **SERVE_KW):
+    async with websockets.serve(handler, "127.0.0.1", 8765, **SERVE_KW):
         log.waiting()
         await asyncio.Future()  # run forever
 
@@ -59,6 +52,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         log.stopped_by_user()
-
-
-

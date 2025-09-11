@@ -1,3 +1,4 @@
+# emit_smoke_test.py
 import asyncio, json, time, websockets
 
 URI = "ws://127.0.0.1:8765"
