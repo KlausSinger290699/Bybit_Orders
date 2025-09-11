@@ -69,6 +69,7 @@
     <Compile Include="Scripts\WS AGGR\div_receiver.py" />
     <Compile Include="Scripts\WS AGGR\emit_smoke_test.py" />
     <Compile Include="Scripts\WS AGGR\log_uniform.py" />
+    <Compile Include="Scripts\WS AGGR\Old\div_receiver_old.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
@@ -79,6 +80,7 @@
     <Content Include="Scripts\Tests\.gitkeep" />
     <Content Include="Scripts\Websockets_Https_Test\.gitkeep" />
     <Content Include="Scripts\WS AGGR\.gitkeep" />
+    <Content Include="Scripts\WS AGGR\Old\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Scripts\" />
@@ -89,6 +91,7 @@
     <Folder Include="Scripts\NewSystem\" />
     <Folder Include="Scripts\OldSystem\" />
     <Folder Include="Scripts\Tests\" />
+    <Folder Include="Scripts\WS AGGR\Old\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
