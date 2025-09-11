@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Websockets_Https_Test\ws_receiver.py</StartupFile>
+    <StartupFile>Scripts\WS AGGR\div_receiver.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -66,6 +66,9 @@
     <Compile Include="Scripts\Websockets_Https_Test\ws_emitter.py" />
     <Compile Include="Scripts\Websockets_Https_Test\ws_receiver.py" />
     <Compile Include="Scripts\Websockets_Https_Test\ws_simple_client.py" />
+    <Compile Include="Scripts\WS AGGR\div_receiver.py" />
+    <Compile Include="Scripts\WS AGGR\emit_smoke_test.py" />
+    <Compile Include="Scripts\WS AGGR\log_uniform.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
@@ -75,10 +78,12 @@
     <Content Include="Scripts\SecurityCopy\.gitkeep" />
     <Content Include="Scripts\Tests\.gitkeep" />
     <Content Include="Scripts\Websockets_Https_Test\.gitkeep" />
+    <Content Include="Scripts\WS AGGR\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Scripts\" />
     <Folder Include="Scripts\Functioning_Tests\" />
+    <Folder Include="Scripts\WS AGGR\" />
     <Folder Include="Scripts\Websockets_Https_Test\" />
     <Folder Include="Scripts\SecurityCopy\" />
     <Folder Include="Scripts\NewSystem\" />
