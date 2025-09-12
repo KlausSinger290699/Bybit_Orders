@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\WS AGGR\div_receiver.py</StartupFile>
+    <StartupFile>Scripts\Playwright_Test\console_sniffer.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -44,6 +44,7 @@
     <Compile Include="Scripts\OldSystem\input_handler.py" />
     <Compile Include="Scripts\OldSystem\main.py" />
     <Compile Include="Scripts\OldSystem\main_client_tests.py" />
+    <Compile Include="Scripts\Playwright_Test\console_sniffer.py" />
     <Compile Include="Scripts\SecurityCopy\calculator.py" />
     <Compile Include="Scripts\SecurityCopy\container.py" />
     <Compile Include="Scripts\SecurityCopy\enums.py" />
@@ -70,6 +71,8 @@
     <Compile Include="Scripts\WS AGGR\emit_smoke_test.py" />
     <Compile Include="Scripts\WS AGGR\log_uniform.py" />
     <Compile Include="Scripts\WS AGGR\Old\div_receiver_old.py" />
+    <Compile Include="Scripts\Playwright_Test\hello_playwright.py" />
+    <Compile Include="Scripts\Playwright_Test\quicktest.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
@@ -85,6 +88,7 @@
   <ItemGroup>
     <Folder Include="Scripts\" />
     <Folder Include="Scripts\Functioning_Tests\" />
+    <Folder Include="Scripts\Playwright_Test\" />
     <Folder Include="Scripts\WS AGGR\" />
     <Folder Include="Scripts\Websockets_Https_Test\" />
     <Folder Include="Scripts\SecurityCopy\" />
