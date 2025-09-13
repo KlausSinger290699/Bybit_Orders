@@ -1,0 +1,1562 @@
+{
+  "unknown": {
+    "thread_id": "unknown",
+    "side": "?",
+    "events": [
+      {
+        "msg": "bus ready"
+      }
+    ]
+  },
+  "bull:1757780998806:fake": {
+    "thread_id": "bull:1757780998806:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757780998806:fake",
+        "pair_id": "L1:1757780938806|L2:1757780998806",
+        "sequence": 1,
+        "pivots": {
+          "L1": {
+            "time": 1757780938806,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757780998806,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781003802:fake": {
+    "thread_id": "bull:1757781003802:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781003802:fake",
+        "pair_id": "L1:1757780943802|L2:1757781003802",
+        "sequence": 2,
+        "pivots": {
+          "L1": {
+            "time": 1757780943802,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781003802,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781008804:fake": {
+    "thread_id": "bull:1757781008804:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781008804:fake",
+        "pair_id": "L1:1757780948804|L2:1757781008804",
+        "sequence": 3,
+        "pivots": {
+          "L1": {
+            "time": 1757780948804,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781008804,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781013799:fake": {
+    "thread_id": "bull:1757781013799:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781013799:fake",
+        "pair_id": "L1:1757780953799|L2:1757781013799",
+        "sequence": 4,
+        "pivots": {
+          "L1": {
+            "time": 1757780953799,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781013799,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781018798:fake": {
+    "thread_id": "bull:1757781018798:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781018798:fake",
+        "pair_id": "L1:1757780958798|L2:1757781018798",
+        "sequence": 5,
+        "pivots": {
+          "L1": {
+            "time": 1757780958798,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781018798,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781023800:fake": {
+    "thread_id": "bull:1757781023800:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781023800:fake",
+        "pair_id": "L1:1757780963800|L2:1757781023800",
+        "sequence": 6,
+        "pivots": {
+          "L1": {
+            "time": 1757780963800,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781023800,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781028797:fake": {
+    "thread_id": "bull:1757781028797:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781028797:fake",
+        "pair_id": "L1:1757780968797|L2:1757781028797",
+        "sequence": 7,
+        "pivots": {
+          "L1": {
+            "time": 1757780968797,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781028797,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781033791:fake": {
+    "thread_id": "bull:1757781033791:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781033791:fake",
+        "pair_id": "L1:1757780973791|L2:1757781033791",
+        "sequence": 8,
+        "pivots": {
+          "L1": {
+            "time": 1757780973791,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781033791,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781038834:fake": {
+    "thread_id": "bull:1757781038834:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781038834:fake",
+        "pair_id": "L1:1757780978834|L2:1757781038834",
+        "sequence": 9,
+        "pivots": {
+          "L1": {
+            "time": 1757780978834,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781038834,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781043805:fake": {
+    "thread_id": "bull:1757781043805:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781043805:fake",
+        "pair_id": "L1:1757780983805|L2:1757781043805",
+        "sequence": 10,
+        "pivots": {
+          "L1": {
+            "time": 1757780983805,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781043805,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781048799:fake": {
+    "thread_id": "bull:1757781048799:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781048799:fake",
+        "pair_id": "L1:1757780988799|L2:1757781048799",
+        "sequence": 11,
+        "pivots": {
+          "L1": {
+            "time": 1757780988799,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781048799,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781053803:fake": {
+    "thread_id": "bull:1757781053803:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781053803:fake",
+        "pair_id": "L1:1757780993803|L2:1757781053803",
+        "sequence": 12,
+        "pivots": {
+          "L1": {
+            "time": 1757780993803,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781053803,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781058792:fake": {
+    "thread_id": "bull:1757781058792:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781058792:fake",
+        "pair_id": "L1:1757780998792|L2:1757781058792",
+        "sequence": 13,
+        "pivots": {
+          "L1": {
+            "time": 1757780998792,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781058792,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781063856:fake": {
+    "thread_id": "bull:1757781063856:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781063856:fake",
+        "pair_id": "L1:1757781003856|L2:1757781063856",
+        "sequence": 14,
+        "pivots": {
+          "L1": {
+            "time": 1757781003856,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781063856,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781068800:fake": {
+    "thread_id": "bull:1757781068800:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781068800:fake",
+        "pair_id": "L1:1757781008800|L2:1757781068800",
+        "sequence": 15,
+        "pivots": {
+          "L1": {
+            "time": 1757781008800,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781068800,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781073806:fake": {
+    "thread_id": "bull:1757781073806:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781073806:fake",
+        "pair_id": "L1:1757781013806|L2:1757781073806",
+        "sequence": 16,
+        "pivots": {
+          "L1": {
+            "time": 1757781013806,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781073806,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781078797:fake": {
+    "thread_id": "bull:1757781078797:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781078797:fake",
+        "pair_id": "L1:1757781018797|L2:1757781078797",
+        "sequence": 17,
+        "pivots": {
+          "L1": {
+            "time": 1757781018797,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781078797,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781083801:fake": {
+    "thread_id": "bull:1757781083801:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781083801:fake",
+        "pair_id": "L1:1757781023801|L2:1757781083801",
+        "sequence": 18,
+        "pivots": {
+          "L1": {
+            "time": 1757781023801,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781083801,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781088800:fake": {
+    "thread_id": "bull:1757781088800:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781088800:fake",
+        "pair_id": "L1:1757781028800|L2:1757781088800",
+        "sequence": 19,
+        "pivots": {
+          "L1": {
+            "time": 1757781028800,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781088800,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781093806:fake": {
+    "thread_id": "bull:1757781093806:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781093806:fake",
+        "pair_id": "L1:1757781033806|L2:1757781093806",
+        "sequence": 20,
+        "pivots": {
+          "L1": {
+            "time": 1757781033806,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781093806,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781098795:fake": {
+    "thread_id": "bull:1757781098795:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781098795:fake",
+        "pair_id": "L1:1757781038795|L2:1757781098795",
+        "sequence": 21,
+        "pivots": {
+          "L1": {
+            "time": 1757781038795,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781098795,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781103842:fake": {
+    "thread_id": "bull:1757781103842:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781103842:fake",
+        "pair_id": "L1:1757781043842|L2:1757781103842",
+        "sequence": 22,
+        "pivots": {
+          "L1": {
+            "time": 1757781043842,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781103842,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781108806:fake": {
+    "thread_id": "bull:1757781108806:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781108806:fake",
+        "pair_id": "L1:1757781048806|L2:1757781108806",
+        "sequence": 23,
+        "pivots": {
+          "L1": {
+            "time": 1757781048806,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781108806,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781113793:fake": {
+    "thread_id": "bull:1757781113793:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781113793:fake",
+        "pair_id": "L1:1757781053793|L2:1757781113793",
+        "sequence": 24,
+        "pivots": {
+          "L1": {
+            "time": 1757781053793,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781113793,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781118805:fake": {
+    "thread_id": "bull:1757781118805:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781118805:fake",
+        "pair_id": "L1:1757781058805|L2:1757781118805",
+        "sequence": 25,
+        "pivots": {
+          "L1": {
+            "time": 1757781058805,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781118805,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781123795:fake": {
+    "thread_id": "bull:1757781123795:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781123795:fake",
+        "pair_id": "L1:1757781063795|L2:1757781123795",
+        "sequence": 26,
+        "pivots": {
+          "L1": {
+            "time": 1757781063795,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781123795,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781128795:fake": {
+    "thread_id": "bull:1757781128795:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781128795:fake",
+        "pair_id": "L1:1757781068795|L2:1757781128795",
+        "sequence": 27,
+        "pivots": {
+          "L1": {
+            "time": 1757781068795,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781128795,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781133802:fake": {
+    "thread_id": "bull:1757781133802:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781133802:fake",
+        "pair_id": "L1:1757781073802|L2:1757781133802",
+        "sequence": 28,
+        "pivots": {
+          "L1": {
+            "time": 1757781073802,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781133802,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781138799:fake": {
+    "thread_id": "bull:1757781138799:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781138799:fake",
+        "pair_id": "L1:1757781078799|L2:1757781138799",
+        "sequence": 29,
+        "pivots": {
+          "L1": {
+            "time": 1757781078799,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781138799,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781143804:fake": {
+    "thread_id": "bull:1757781143804:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781143804:fake",
+        "pair_id": "L1:1757781083804|L2:1757781143804",
+        "sequence": 30,
+        "pivots": {
+          "L1": {
+            "time": 1757781083804,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781143804,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781148797:fake": {
+    "thread_id": "bull:1757781148797:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781148797:fake",
+        "pair_id": "L1:1757781088797|L2:1757781148797",
+        "sequence": 31,
+        "pivots": {
+          "L1": {
+            "time": 1757781088797,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781148797,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781153792:fake": {
+    "thread_id": "bull:1757781153792:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781153792:fake",
+        "pair_id": "L1:1757781093792|L2:1757781153792",
+        "sequence": 32,
+        "pivots": {
+          "L1": {
+            "time": 1757781093792,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781153792,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781158795:fake": {
+    "thread_id": "bull:1757781158795:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781158795:fake",
+        "pair_id": "L1:1757781098795|L2:1757781158795",
+        "sequence": 33,
+        "pivots": {
+          "L1": {
+            "time": 1757781098795,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781158795,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781163791:fake": {
+    "thread_id": "bull:1757781163791:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781163791:fake",
+        "pair_id": "L1:1757781103791|L2:1757781163791",
+        "sequence": 34,
+        "pivots": {
+          "L1": {
+            "time": 1757781103791,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781163791,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781168796:fake": {
+    "thread_id": "bull:1757781168796:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781168796:fake",
+        "pair_id": "L1:1757781108796|L2:1757781168796",
+        "sequence": 35,
+        "pivots": {
+          "L1": {
+            "time": 1757781108796,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781168796,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781173900:fake": {
+    "thread_id": "bull:1757781173900:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781173900:fake",
+        "pair_id": "L1:1757781113900|L2:1757781173900",
+        "sequence": 36,
+        "pivots": {
+          "L1": {
+            "time": 1757781113900,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781173900,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781178792:fake": {
+    "thread_id": "bull:1757781178792:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781178792:fake",
+        "pair_id": "L1:1757781118792|L2:1757781178792",
+        "sequence": 37,
+        "pivots": {
+          "L1": {
+            "time": 1757781118792,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781178792,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781183792:fake": {
+    "thread_id": "bull:1757781183792:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781183792:fake",
+        "pair_id": "L1:1757781123792|L2:1757781183792",
+        "sequence": 38,
+        "pivots": {
+          "L1": {
+            "time": 1757781123792,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781183792,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781188804:fake": {
+    "thread_id": "bull:1757781188804:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781188804:fake",
+        "pair_id": "L1:1757781128804|L2:1757781188804",
+        "sequence": 39,
+        "pivots": {
+          "L1": {
+            "time": 1757781128804,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781188804,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781193796:fake": {
+    "thread_id": "bull:1757781193796:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781193796:fake",
+        "pair_id": "L1:1757781133796|L2:1757781193796",
+        "sequence": 40,
+        "pivots": {
+          "L1": {
+            "time": 1757781133796,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781193796,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781198800:fake": {
+    "thread_id": "bull:1757781198800:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781198800:fake",
+        "pair_id": "L1:1757781138800|L2:1757781198800",
+        "sequence": 41,
+        "pivots": {
+          "L1": {
+            "time": 1757781138800,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781198800,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781203878:fake": {
+    "thread_id": "bull:1757781203878:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781203878:fake",
+        "pair_id": "L1:1757781143878|L2:1757781203878",
+        "sequence": 42,
+        "pivots": {
+          "L1": {
+            "time": 1757781143878,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781203878,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781208845:fake": {
+    "thread_id": "bull:1757781208845:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781208845:fake",
+        "pair_id": "L1:1757781148845|L2:1757781208845",
+        "sequence": 43,
+        "pivots": {
+          "L1": {
+            "time": 1757781148845,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781208845,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781213830:fake": {
+    "thread_id": "bull:1757781213830:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781213830:fake",
+        "pair_id": "L1:1757781153830|L2:1757781213830",
+        "sequence": 44,
+        "pivots": {
+          "L1": {
+            "time": 1757781153830,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781213830,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781218827:fake": {
+    "thread_id": "bull:1757781218827:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781218827:fake",
+        "pair_id": "L1:1757781158827|L2:1757781218827",
+        "sequence": 45,
+        "pivots": {
+          "L1": {
+            "time": 1757781158827,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781218827,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781223823:fake": {
+    "thread_id": "bull:1757781223823:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781223823:fake",
+        "pair_id": "L1:1757781163823|L2:1757781223823",
+        "sequence": 46,
+        "pivots": {
+          "L1": {
+            "time": 1757781163823,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781223823,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  },
+  "bull:1757781228803:fake": {
+    "thread_id": "bull:1757781228803:fake",
+    "side": "bull",
+    "events": [
+      {
+        "v": 1,
+        "source": "aggr/indicator",
+        "tf_sec": 900,
+        "instrument": "BTCUSD-PERP",
+        "side": "bull",
+        "status": "\u2705",
+        "thread_id": "bull:1757781228803:fake",
+        "pair_id": "L1:1757781168803|L2:1757781228803",
+        "sequence": 47,
+        "pivots": {
+          "L1": {
+            "time": 1757781168803,
+            "price": 56123.5
+          },
+          "L2": {
+            "time": 1757781228803,
+            "price": 56210
+          }
+        },
+        "helpers": {
+          "SL": 56210,
+          "TP": 56820
+        },
+        "cvd_source": "fake",
+        "notes": "fake test event"
+      }
+    ]
+  }
+}

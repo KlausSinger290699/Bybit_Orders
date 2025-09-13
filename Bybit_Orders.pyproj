@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Playwright_Test\console_sniffer.py</StartupFile>
+    <StartupFile>Scripts\Playwright\console_sniffer_with_data.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -44,6 +44,7 @@
     <Compile Include="Scripts\OldSystem\input_handler.py" />
     <Compile Include="Scripts\OldSystem\main.py" />
     <Compile Include="Scripts\OldSystem\main_client_tests.py" />
+    <Compile Include="Scripts\Playwright\console_sniffer_with_data.py" />
     <Compile Include="Scripts\Playwright_Test\console_sniffer.py" />
     <Compile Include="Scripts\SecurityCopy\calculator.py" />
     <Compile Include="Scripts\SecurityCopy\container.py" />
@@ -79,6 +80,8 @@
     <Content Include="Scripts\Functioning_Tests\.gitkeep" />
     <Content Include="Scripts\NewSystem\.gitkeep" />
     <Content Include="Scripts\OldSystem\.gitkeep" />
+    <Content Include="Scripts\Playwright\.gitkeep" />
+    <Content Include="Scripts\Playwright_Test\.gitkeep" />
     <Content Include="Scripts\SecurityCopy\.gitkeep" />
     <Content Include="Scripts\Tests\.gitkeep" />
     <Content Include="Scripts\Websockets_Https_Test\.gitkeep" />
@@ -88,6 +91,7 @@
   <ItemGroup>
     <Folder Include="Scripts\" />
     <Folder Include="Scripts\Functioning_Tests\" />
+    <Folder Include="Scripts\Playwright\" />
     <Folder Include="Scripts\Playwright_Test\" />
     <Folder Include="Scripts\WS AGGR\" />
     <Folder Include="Scripts\Websockets_Https_Test\" />
