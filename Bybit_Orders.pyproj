@@ -47,6 +47,9 @@
     <Compile Include="Scripts\Playwright\bull_div_reader_minimalworkingversionforconsole.py" />
     <Compile Include="Scripts\Playwright\bull_div_reader.py" />
     <Compile Include="Scripts\Playwright\console_sniffer_with_data.py" />
+    <Compile Include="Scripts\Playwright_div\adapters.py" />
+    <Compile Include="Scripts\Playwright_div\app.py" />
+    <Compile Include="Scripts\Playwright_div\core.py" />
     <Compile Include="Scripts\Playwright_Test\console_sniffer.py" />
     <Compile Include="Scripts\SecurityCopy\calculator.py" />
     <Compile Include="Scripts\SecurityCopy\container.py" />
@@ -83,6 +86,7 @@
     <Content Include="Scripts\NewSystem\.gitkeep" />
     <Content Include="Scripts\OldSystem\.gitkeep" />
     <Content Include="Scripts\Playwright\.gitkeep" />
+    <Content Include="Scripts\Playwright_div\.gitkeep" />
     <Content Include="Scripts\Playwright_Test\.gitkeep" />
     <Content Include="Scripts\SecurityCopy\.gitkeep" />
     <Content Include="Scripts\Tests\.gitkeep" />
@@ -93,6 +97,7 @@
   <ItemGroup>
     <Folder Include="Scripts\" />
     <Folder Include="Scripts\Functioning_Tests\" />
+    <Folder Include="Scripts\Playwright_div\" />
     <Folder Include="Scripts\Playwright\" />
     <Folder Include="Scripts\Playwright_Test\" />
     <Folder Include="Scripts\WS AGGR\" />
