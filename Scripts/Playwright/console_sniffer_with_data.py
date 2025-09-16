@@ -13,6 +13,27 @@ SAVE_PATH = Path("threads.json")
 
 # --- DATA MODEL ---
 
+# --- add this helper somewhere above on_console ---
+def is_divergence_event(payload: dict) -> bool:
+    # Only accept normalized indicator events our receiver prints
+    if not isinstance(payload, dict):
+        return False
+    if payload.get("v") != 1:
+        return False
+    if payload.get("source") != "aggr/indicator":
+        return False
+    # Must have thread metadata
+    if not isinstance(payload.get("thread_id"), str):
+        return False
+    if not isinstance(payload.get("sequence"), int):
+        return False
+    # Side/status are expected too
+    if not isinstance(payload.get("side"), str):
+        return False
+    if not isinstance(payload.get("status"), str):
+        return False
+    return True
+
 class DivergenceEvent:
     """Immutable event wrapper."""
     def __init__(self, data: dict):
@@ -123,11 +144,15 @@ async def main():
         )
         page = await context.new_page()
 
+        # --- replace your on_console with this ---
         def on_console(msg):
             text = getattr(msg, "text", msg)
             ok, payload = extract_payload(str(text))
-            if ok and isinstance(payload, dict):
+            if not ok:
+                return
+            if isinstance(payload, dict) and is_divergence_event(payload):
                 store.add_event(payload)
+            # else: silently ignore non-event logs (e.g., {"msg":"bus ready"})
 
         page.on("console", on_console)
         await page.goto(URL)
