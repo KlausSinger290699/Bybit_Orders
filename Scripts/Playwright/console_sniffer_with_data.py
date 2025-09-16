@@ -87,19 +87,83 @@ class Thread:
 
 
 class ThreadStore:
-    """Central store for all divergence threads."""
+    """Central store for all divergence threads (ordered print per sequence)."""
     def __init__(self):
         self._threads: Dict[str, Thread] = {}
+        self._last_seq: Optional[int] = None
+        self._cur_seq: Optional[int] = None
+        self._buf: List[dict] = []  # buffer of raw event dicts for current sequence
+
+    @staticmethod
+    def fmt_price(p):
+        if isinstance(p, (int, float)):
+            return f"{int(round(p))}"  # no decimals
+        return "?"
+
+    @staticmethod
+    def fmt_tf(sec):
+        table = {
+            60:"1m", 120:"2m", 180:"3m", 300:"5m", 600:"10m", 900:"15m",
+            1200:"20m", 1800:"30m", 3600:"1h", 7200:"2h", 14400:"4h",
+            21600:"6h", 43200:"12h", 86400:"1d"
+        }
+        return table.get(sec, f"{sec}s" if isinstance(sec, int) else "?")
+
+    def _extract_L1_L2(self, data: dict):
+        piv = data.get("pivots") or {}
+        l1 = data.get("L1") or piv.get("L1") or {}
+        l2 = data.get("L2") or piv.get("L2") or {}
+        return l1, l2
+
+    def _flush_current_sequence(self):
+        if not self._buf or self._cur_seq is None:
+            return
+
+        # sort buffered events by first pivot time (older low) ascending
+        def l1_time(ev):
+            l1, _ = self._extract_L1_L2(ev)
+            t = l1.get("time")
+            return t if isinstance(t, (int, float)) else float("inf")
+
+        batch = sorted(self._buf, key=l1_time)
+        self._buf.clear()
+
+        print(f"\n─────────────── 📌 Sequence #{self._cur_seq} ───────────────")
+        for data in batch:
+            side = data.get("side", "?")
+            side_icon = "🟢" if side == "bull" else "🔴"
+            status_icon = data.get("status", "?")
+
+            l1, l2 = self._extract_L1_L2(data)
+            l1p = self.fmt_price(l1.get("price"))
+            l2p = self.fmt_price(l2.get("price"))
+            tf  = data.get("tf_label") or self.fmt_tf(data.get("tf_sec"))
+
+            print(f"{status_icon} {side_icon} | {l1p}-{l2p} ({tf})")
+
+        self._last_seq = self._cur_seq
+        self._cur_seq = None
 
     def add_event(self, data: dict):
         event = DivergenceEvent(data)
         tid = event.thread_id
 
+        # ensure thread bucket exists & store event
         if tid not in self._threads:
             self._threads[tid] = Thread(thread_id=tid, side=event.side)
-
         self._threads[tid].add_event(event)
-        print(f"📌 Stored event #{event.sequence} for {tid} ({event.side}, {event.status})")
+
+        seq = event.sequence  # existing sequence value you already have
+
+        # if the sequence changed, flush previous and start a new buffer
+        if self._cur_seq is None:
+            self._cur_seq = seq
+        elif seq != self._cur_seq:
+            self._flush_current_sequence()
+            self._cur_seq = seq
+
+        # buffer this event for ordered printing
+        self._buf.append(data)
 
     def get_thread(self, thread_id: str) -> Optional[Thread]:
         return self._threads.get(thread_id)
@@ -111,9 +175,14 @@ class ThreadStore:
         return {tid: thread.to_dict() for tid, thread in self._threads.items()}
 
     def save_json(self, path: Path):
+        # ensure the latest (possibly incomplete) sequence is printed before saving
+        self._flush_current_sequence()
         with open(path, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2)
         print(f"💾 Saved {len(self._threads)} threads to {path}")
+
+        print(f"💾 Saved {len(self._threads)} threads to {path}")
+
 
 
 # --- HELPERS ---
