@@ -44,6 +44,7 @@
     <Compile Include="Scripts\OldSystem\input_handler.py" />
     <Compile Include="Scripts\OldSystem\main.py" />
     <Compile Include="Scripts\OldSystem\main_client_tests.py" />
+    <Compile Include="Scripts\Playwright\bull_div_reader_minimalworkingversionforconsole.py" />
     <Compile Include="Scripts\Playwright\bull_div_reader.py" />
     <Compile Include="Scripts\Playwright\console_sniffer_with_data.py" />
     <Compile Include="Scripts\Playwright_Test\console_sniffer.py" />
