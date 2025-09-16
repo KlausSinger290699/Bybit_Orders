@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Playwright\console_sniffer_with_data.py</StartupFile>
+    <StartupFile>Scripts\Playwright\bull_div_reader.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -44,6 +44,7 @@
     <Compile Include="Scripts\OldSystem\input_handler.py" />
     <Compile Include="Scripts\OldSystem\main.py" />
     <Compile Include="Scripts\OldSystem\main_client_tests.py" />
+    <Compile Include="Scripts\Playwright\bull_div_reader.py" />
     <Compile Include="Scripts\Playwright\console_sniffer_with_data.py" />
     <Compile Include="Scripts\Playwright_Test\console_sniffer.py" />
     <Compile Include="Scripts\SecurityCopy\calculator.py" />
