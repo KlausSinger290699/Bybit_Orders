@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Playwright_div\bull_div_reader.py</StartupFile>
+    <StartupFile>Scripts\Trading_Bot_Test\bull_div_reader.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,92 +22,97 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Scripts\Functioning_Tests\container.py" />
-    <Compile Include="Scripts\Functioning_Tests\enums.py" />
-    <Compile Include="Scripts\Functioning_Tests\models.py" />
-    <Compile Include="Scripts\Functioning_Tests\order_calculator.py" />
-    <Compile Include="Scripts\NewSystem\calculator.py" />
-    <Compile Include="Scripts\NewSystem\exchange_client_single.py" />
-    <Compile Include="Scripts\NewSystem\multiple_exchange_client.py" />
-    <Compile Include="Scripts\NewSystem\standalone_calculator.py" />
-    <Compile Include="Scripts\NewSystem\container.py" />
-    <Compile Include="Scripts\NewSystem\enums.py" />
-    <Compile Include="Scripts\NewSystem\exchange_client.py" />
-    <Compile Include="Scripts\NewSystem\standalone_client_test.py" />
-    <Compile Include="Scripts\NewSystem\models.py" />
-    <Compile Include="Scripts\NewSystem\order_calculator.py" />
-    <Compile Include="Scripts\OldSystem\account_config.py" />
-    <Compile Include="Scripts\Functioning_Tests\calculator.py" />
-    <Compile Include="Scripts\OldSystem\calculator.py" />
-    <Compile Include="Scripts\OldSystem\container.py" />
-    <Compile Include="Scripts\OldSystem\exchange_client.py" />
-    <Compile Include="Scripts\OldSystem\input_handler.py" />
-    <Compile Include="Scripts\OldSystem\main.py" />
-    <Compile Include="Scripts\OldSystem\main_client_tests.py" />
-    <Compile Include="Scripts\Playwright\bull_div_reader_minimalworkingversionforconsole.py" />
-    <Compile Include="Scripts\Playwright\bull_div_reader.py" />
-    <Compile Include="Scripts\Playwright\console_sniffer_with_data.py" />
-    <Compile Include="Scripts\Playwright_div\adapters.py" />
-    <Compile Include="Scripts\Playwright_div\app.py" />
-    <Compile Include="Scripts\Playwright_div\bull_div_reader.py" />
-    <Compile Include="Scripts\Playwright_div\core.py" />
-    <Compile Include="Scripts\Playwright_Test\console_sniffer.py" />
-    <Compile Include="Scripts\SecurityCopy\calculator.py" />
-    <Compile Include="Scripts\SecurityCopy\container.py" />
-    <Compile Include="Scripts\SecurityCopy\enums.py" />
-    <Compile Include="Scripts\SecurityCopy\main_client_tests.py" />
-    <Compile Include="Scripts\SecurityCopy\models.py" />
-    <Compile Include="Scripts\SecurityCopy\order_calculator.py" />
-    <Compile Include="Scripts\Tests\main_client_standalone_tests.py" />
-    <Compile Include="Scripts\Tests\main_client_automatic_tests.py" />
-    <Compile Include="Scripts\Functioning_Tests\main_client_tests.py" />
-    <Compile Include="Scripts\Tests\main_test.py" />
-    <Compile Include="Scripts\OldSystem\models.py" />
-    <Compile Include="Scripts\OldSystem\order_calculator.py" />
-    <Compile Include="Scripts\OldSystem\test_presets.py" />
-    <Compile Include="Scripts\OldSystem\trade_executor.py" />
-    <Compile Include="Scripts\OldSystem\enums.py" />
-    <Compile Include="Scripts\Websockets_Https_Test\http_client.py" />
-    <Compile Include="Scripts\Websockets_Https_Test\http_server.py" />
-    <Compile Include="Scripts\Websockets_Https_Test\http_simple_client.py" />
-    <Compile Include="Scripts\Websockets_Https_Test\log_uniform.py" />
-    <Compile Include="Scripts\Websockets_Https_Test\ws_emitter.py" />
-    <Compile Include="Scripts\Websockets_Https_Test\ws_receiver.py" />
-    <Compile Include="Scripts\Websockets_Https_Test\ws_simple_client.py" />
-    <Compile Include="Scripts\WS AGGR\div_receiver.py" />
-    <Compile Include="Scripts\WS AGGR\emit_smoke_test.py" />
-    <Compile Include="Scripts\WS AGGR\log_uniform.py" />
-    <Compile Include="Scripts\WS AGGR\Old\div_receiver_old.py" />
-    <Compile Include="Scripts\Playwright_Test\hello_playwright.py" />
-    <Compile Include="Scripts\Playwright_Test\quicktest.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\bull_div_reader.py" />
+    <Compile Include="Scripts\z_Tests\Functioning_Tests\container.py" />
+    <Compile Include="Scripts\z_Tests\Functioning_Tests\enums.py" />
+    <Compile Include="Scripts\z_Tests\Functioning_Tests\models.py" />
+    <Compile Include="Scripts\z_Tests\Functioning_Tests\order_calculator.py" />
+    <Compile Include="Scripts\Calculator\calculator.py" />
+    <Compile Include="Scripts\Calculator\exchange_client_single.py" />
+    <Compile Include="Scripts\Calculator\multiple_exchange_client.py" />
+    <Compile Include="Scripts\Calculator\standalone_calculator.py" />
+    <Compile Include="Scripts\Calculator\container.py" />
+    <Compile Include="Scripts\Calculator\enums.py" />
+    <Compile Include="Scripts\Calculator\exchange_client.py" />
+    <Compile Include="Scripts\Calculator\standalone_client_test.py" />
+    <Compile Include="Scripts\Calculator\models.py" />
+    <Compile Include="Scripts\Calculator\order_calculator.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\account_config.py" />
+    <Compile Include="Scripts\z_Tests\Functioning_Tests\calculator.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\calculator.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\container.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\exchange_client.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\input_handler.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\main.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\main_client_tests.py" />
+    <Compile Include="Scripts\z_Tests\Playwright\bull_div_reader_minimalworkingversionforconsole.py" />
+    <Compile Include="Scripts\z_Tests\Playwright\bull_div_reader.py" />
+    <Compile Include="Scripts\z_Tests\Playwright\console_sniffer_with_data.py" />
+    <Compile Include="Scripts\z_Tests\Playwright_div\adapters.py" />
+    <Compile Include="Scripts\z_Tests\Playwright_div\app.py" />
+    <Compile Include="Scripts\z_Tests\Playwright_div\bull_div_reader.py" />
+    <Compile Include="Scripts\z_Tests\Playwright_div\core.py" />
+    <Compile Include="Scripts\z_Tests\Playwright_Test\console_sniffer.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy\calculator.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy\container.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy\enums.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy\main_client_tests.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy\models.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy\order_calculator.py" />
+    <Compile Include="Scripts\z_Tests\API_Tests\main_client_standalone_tests.py" />
+    <Compile Include="Scripts\z_Tests\API_Tests\main_client_automatic_tests.py" />
+    <Compile Include="Scripts\z_Tests\Functioning_Tests\main_client_tests.py" />
+    <Compile Include="Scripts\z_Tests\API_Tests\main_test.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\models.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\order_calculator.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\test_presets.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\trade_executor.py" />
+    <Compile Include="Scripts\z_Tests\OldSystem\enums.py" />
+    <Compile Include="Scripts\z_Tests\Websockets_Https_Test\http_client.py" />
+    <Compile Include="Scripts\z_Tests\Websockets_Https_Test\http_server.py" />
+    <Compile Include="Scripts\z_Tests\Websockets_Https_Test\http_simple_client.py" />
+    <Compile Include="Scripts\z_Tests\Websockets_Https_Test\log_uniform.py" />
+    <Compile Include="Scripts\z_Tests\Websockets_Https_Test\ws_emitter.py" />
+    <Compile Include="Scripts\z_Tests\Websockets_Https_Test\ws_receiver.py" />
+    <Compile Include="Scripts\z_Tests\Websockets_Https_Test\ws_simple_client.py" />
+    <Compile Include="Scripts\z_Tests\WS AGGR\div_receiver.py" />
+    <Compile Include="Scripts\z_Tests\WS AGGR\emit_smoke_test.py" />
+    <Compile Include="Scripts\z_Tests\WS AGGR\log_uniform.py" />
+    <Compile Include="Scripts\z_Tests\WS AGGR\Old\div_receiver_old.py" />
+    <Compile Include="Scripts\z_Tests\Playwright_Test\hello_playwright.py" />
+    <Compile Include="Scripts\z_Tests\Playwright_Test\quicktest.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
-    <Content Include="Scripts\Functioning_Tests\.gitkeep" />
-    <Content Include="Scripts\NewSystem\.gitkeep" />
-    <Content Include="Scripts\OldSystem\.gitkeep" />
-    <Content Include="Scripts\Playwright\.gitkeep" />
-    <Content Include="Scripts\Playwright_div\.gitkeep" />
-    <Content Include="Scripts\Playwright_Test\.gitkeep" />
-    <Content Include="Scripts\SecurityCopy\.gitkeep" />
-    <Content Include="Scripts\Tests\.gitkeep" />
-    <Content Include="Scripts\Websockets_Https_Test\.gitkeep" />
-    <Content Include="Scripts\WS AGGR\.gitkeep" />
-    <Content Include="Scripts\WS AGGR\Old\.gitkeep" />
+    <Content Include="Scripts\Trading_Bot_Test\.gitkeep" />
+    <Content Include="Scripts\z_Tests\Functioning_Tests\.gitkeep" />
+    <Content Include="Scripts\Calculator\.gitkeep" />
+    <Content Include="Scripts\z_Tests\OldSystem\.gitkeep" />
+    <Content Include="Scripts\z_Tests\Playwright\.gitkeep" />
+    <Content Include="Scripts\z_Tests\Playwright_div\.gitkeep" />
+    <Content Include="Scripts\z_Tests\Playwright_Test\.gitkeep" />
+    <Content Include="Scripts\z_Tests\SecurityCopy\.gitkeep" />
+    <Content Include="Scripts\z_Tests\API_Tests\.gitkeep" />
+    <Content Include="Scripts\z_Tests\Websockets_Https_Test\.gitkeep" />
+    <Content Include="Scripts\z_Tests\WS AGGR\.gitkeep" />
+    <Content Include="Scripts\z_Tests\WS AGGR\Old\.gitkeep" />
+    <Content Include="Scripts\z_Tests\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Scripts\" />
-    <Folder Include="Scripts\Functioning_Tests\" />
-    <Folder Include="Scripts\Playwright_div\" />
-    <Folder Include="Scripts\Playwright\" />
-    <Folder Include="Scripts\Playwright_Test\" />
-    <Folder Include="Scripts\WS AGGR\" />
-    <Folder Include="Scripts\Websockets_Https_Test\" />
-    <Folder Include="Scripts\SecurityCopy\" />
-    <Folder Include="Scripts\NewSystem\" />
-    <Folder Include="Scripts\OldSystem\" />
-    <Folder Include="Scripts\Tests\" />
-    <Folder Include="Scripts\WS AGGR\Old\" />
+    <Folder Include="Scripts\Trading_Bot_Test\" />
+    <Folder Include="Scripts\z_Tests\Functioning_Tests\" />
+    <Folder Include="Scripts\z_Tests\" />
+    <Folder Include="Scripts\z_Tests\Playwright_div\" />
+    <Folder Include="Scripts\z_Tests\Playwright\" />
+    <Folder Include="Scripts\z_Tests\Playwright_Test\" />
+    <Folder Include="Scripts\z_Tests\WS AGGR\" />
+    <Folder Include="Scripts\z_Tests\Websockets_Https_Test\" />
+    <Folder Include="Scripts\z_Tests\SecurityCopy\" />
+    <Folder Include="Scripts\Calculator\" />
+    <Folder Include="Scripts\z_Tests\OldSystem\" />
+    <Folder Include="Scripts\z_Tests\API_Tests\" />
+    <Folder Include="Scripts\z_Tests\WS AGGR\Old\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
