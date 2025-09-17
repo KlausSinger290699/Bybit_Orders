@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Playwright\bull_div_reader.py</StartupFile>
+    <StartupFile>Scripts\Playwright_div\bull_div_reader.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -49,6 +49,7 @@
     <Compile Include="Scripts\Playwright\console_sniffer_with_data.py" />
     <Compile Include="Scripts\Playwright_div\adapters.py" />
     <Compile Include="Scripts\Playwright_div\app.py" />
+    <Compile Include="Scripts\Playwright_div\bull_div_reader.py" />
     <Compile Include="Scripts\Playwright_div\core.py" />
     <Compile Include="Scripts\Playwright_Test\console_sniffer.py" />
     <Compile Include="Scripts\SecurityCopy\calculator.py" />
