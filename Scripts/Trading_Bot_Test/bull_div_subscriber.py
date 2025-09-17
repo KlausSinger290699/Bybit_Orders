@@ -1,6 +1,8 @@
 ﻿# bull_div_subscriber.py
 import bull_div_reader_sync
 
+#TODO: Use Websockets instead of events to communicate with bull_div_reader_sync
+
 # simple counters to verify we get everything
 count = {"n": 0}
 
