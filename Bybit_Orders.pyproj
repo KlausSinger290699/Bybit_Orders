@@ -23,8 +23,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Scripts\Trading_Bot_Test\bull_div_reader_sync.py" />
-    <Compile Include="Scripts\Trading_Bot_Test\bull_div_reader.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\bull_div_reader_async.py" />
     <Compile Include="Scripts\Trading_Bot_Test\bull_div_subscriber.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\log_uniform.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\ws_emit_bridge.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\ws_receiver_bridge.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\container.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\enums.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\models.py" />
@@ -52,12 +55,13 @@
     <Compile Include="Scripts\z_Tests\Playwright\console_sniffer_with_data.py" />
     <Compile Include="Scripts\z_Tests\Playwright_div\bull_div_reader.py" />
     <Compile Include="Scripts\z_Tests\Playwright_Test\console_sniffer.py" />
-    <Compile Include="Scripts\z_Tests\SecurityCopy\calculator.py" />
-    <Compile Include="Scripts\z_Tests\SecurityCopy\container.py" />
-    <Compile Include="Scripts\z_Tests\SecurityCopy\enums.py" />
-    <Compile Include="Scripts\z_Tests\SecurityCopy\main_client_tests.py" />
-    <Compile Include="Scripts\z_Tests\SecurityCopy\models.py" />
-    <Compile Include="Scripts\z_Tests\SecurityCopy\order_calculator.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy_bulldiv\bull_div_reader_sync.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy_Calculator\calculator.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy_Calculator\container.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy_Calculator\enums.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy_Calculator\main_client_tests.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy_Calculator\models.py" />
+    <Compile Include="Scripts\z_Tests\SecurityCopy_Calculator\order_calculator.py" />
     <Compile Include="Scripts\z_Tests\API_Tests\main_client_standalone_tests.py" />
     <Compile Include="Scripts\z_Tests\API_Tests\main_client_automatic_tests.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\main_client_tests.py" />
@@ -90,7 +94,8 @@
     <Content Include="Scripts\z_Tests\Playwright\.gitkeep" />
     <Content Include="Scripts\z_Tests\Playwright_div\.gitkeep" />
     <Content Include="Scripts\z_Tests\Playwright_Test\.gitkeep" />
-    <Content Include="Scripts\z_Tests\SecurityCopy\.gitkeep" />
+    <Content Include="Scripts\z_Tests\SecurityCopy_bulldiv\.gitkeep" />
+    <Content Include="Scripts\z_Tests\SecurityCopy_Calculator\.gitkeep" />
     <Content Include="Scripts\z_Tests\API_Tests\.gitkeep" />
     <Content Include="Scripts\z_Tests\Websockets_Https_Test\.gitkeep" />
     <Content Include="Scripts\z_Tests\WS AGGR\.gitkeep" />
@@ -102,12 +107,14 @@
     <Folder Include="Scripts\Trading_Bot_Test\" />
     <Folder Include="Scripts\z_Tests\Functioning_Tests\" />
     <Folder Include="Scripts\z_Tests\" />
+    <Folder Include="Scripts\z_Tests\NewFolder1\" />
+    <Folder Include="Scripts\z_Tests\SecurityCopy_bulldiv\" />
     <Folder Include="Scripts\z_Tests\Playwright_div\" />
     <Folder Include="Scripts\z_Tests\Playwright\" />
     <Folder Include="Scripts\z_Tests\Playwright_Test\" />
     <Folder Include="Scripts\z_Tests\WS AGGR\" />
     <Folder Include="Scripts\z_Tests\Websockets_Https_Test\" />
-    <Folder Include="Scripts\z_Tests\SecurityCopy\" />
+    <Folder Include="Scripts\z_Tests\SecurityCopy_Calculator\" />
     <Folder Include="Scripts\Calculator\" />
     <Folder Include="Scripts\z_Tests\OldSystem\" />
     <Folder Include="Scripts\z_Tests\API_Tests\" />

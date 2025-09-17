@@ -1,20 +1,17 @@
-﻿# bull_div_reader.py (sync Playwright)  — with WebSocket emitter bridge
+﻿# bull_div_reader.py (sync Playwright)
 import json
 import time
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-# from pyee import EventEmitter  # no longer needed for WS path
-import ws_emit_bridge  # NEW: background websocket emitter
+from pyee import EventEmitter
 
-# bus = EventEmitter()  # no longer used
-
+bus = EventEmitter()
 # --- CONFIG ---
 PREFIX = "[AGGR INDICATOR]"
 URL = "https://charts.aggr.trade/koenzv4"
 PROFILE_DIR = r"C:\Users\Anwender\PlaywrightProfiles\aggr"
-WS_URI = "ws://127.0.0.1:8765"  # NEW: where to send payloads
 
 # Visual layout constants for the sequence header/footer
 SEQ_TARGET_INNER = 58  # target inner width between the corners (tweak to taste)
@@ -189,16 +186,20 @@ class Printer:
             print("└───────────────────────────────────────────")
 
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            # SEND OVER WEBSOCKET (non-blocking, background sender)
-            payload = {
-                "L1": L1p, "T1": T1,
-                "L2": L2p, "T2": T2,
-                "L3": L3p, "T3": T3,
-                "L4": L4p, "T4": T4,
-                "SL": L2p,
-                "Tradable": tradable,
-            }
-            ws_emit_bridge.send(payload)
+            # EMIT STRUCTURED EVENT (Unity-style) with raw numeric values
+            try:
+                payload = {
+                    "L1": L1p, "T1": T1,
+                    "L2": L2p, "T2": T2,
+                    "L3": L3p, "T3": T3,
+                    "L4": L4p, "T4": T4,
+                    "SL": L2p,
+                    "Tradable": tradable,
+                }
+                bus.emit("divergence", payload)
+            except NameError:
+                # 'bus' not defined (pyee not installed or not imported) — safe no-op
+                pass
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         # Footer bar
@@ -295,14 +296,12 @@ class StrategyEngine:
 
 
 # --- MAIN LOOP (sync, callback + non-blocking idle) -------------------------
+from playwright.sync_api import sync_playwright
 
 def main():
     Path(PROFILE_DIR).mkdir(parents=True, exist_ok=True)
     printer = Printer()
     engine = StrategyEngine()
-
-    # Start background WS emitter
-    ws_emit_bridge.start(WS_URI)  # NEW
 
     with sync_playwright() as p:
         context = p.chromium.launch_persistent_context(
@@ -346,9 +345,8 @@ def main():
                 except Exception: pass
             try: context.close()
             except Exception: pass
-            # Stop background WS emitter
-            ws_emit_bridge.stop()  # NEW
 
 
 if __name__ == "__main__":
     main()
+
