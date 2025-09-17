@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Trading_Bot_Test\bull_div_reader_sync.py</StartupFile>
+    <StartupFile>Scripts\Trading_Bot_Test\Emmit\bull_div_reader_sync.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,12 +22,13 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Scripts\Trading_Bot_Test\bull_div_reader_sync.py" />
-    <Compile Include="Scripts\Trading_Bot_Test\bull_div_reader_async.py" />
-    <Compile Include="Scripts\Trading_Bot_Test\bull_div_subscriber.py" />
-    <Compile Include="Scripts\Trading_Bot_Test\log_uniform.py" />
-    <Compile Include="Scripts\Trading_Bot_Test\ws_emit_bridge.py" />
-    <Compile Include="Scripts\Trading_Bot_Test\ws_receiver_bridge.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\Emmit\bull_div_reader_async.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\Emmit\bull_div_reader_sync.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\Emmit\bull_div_subscriber.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\Emmit\log_uniform.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\Emmit\ws_emit_bridge.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\Receive\log_uniform.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\Receive\ws_receiver_bridge.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\container.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\enums.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\models.py" />
@@ -88,6 +89,8 @@
   <ItemGroup>
     <Content Include="Scripts\.gitkeep" />
     <Content Include="Scripts\Trading_Bot_Test\.gitkeep" />
+    <Content Include="Scripts\Trading_Bot_Test\Emmit\.gitkeep" />
+    <Content Include="Scripts\Trading_Bot_Test\Receive\.gitkeep" />
     <Content Include="Scripts\z_Tests\Functioning_Tests\.gitkeep" />
     <Content Include="Scripts\Calculator\.gitkeep" />
     <Content Include="Scripts\z_Tests\OldSystem\.gitkeep" />
@@ -105,6 +108,8 @@
   <ItemGroup>
     <Folder Include="Scripts\" />
     <Folder Include="Scripts\Trading_Bot_Test\" />
+    <Folder Include="Scripts\Trading_Bot_Test\Emmit\" />
+    <Folder Include="Scripts\Trading_Bot_Test\Receive\" />
     <Folder Include="Scripts\z_Tests\Functioning_Tests\" />
     <Folder Include="Scripts\z_Tests\" />
     <Folder Include="Scripts\z_Tests\NewFolder1\" />
