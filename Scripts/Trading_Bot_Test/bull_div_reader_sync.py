@@ -5,7 +5,9 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+from pyee import EventEmitter
 
+bus = EventEmitter()
 # --- CONFIG ---
 PREFIX = "[AGGR INDICATOR]"
 URL = "https://charts.aggr.trade/koenzv4"
@@ -183,10 +185,28 @@ class Printer:
             print(f"│ SL = {fmt_price(L2p)}   (SL = L2.prev = L1.curr)")
             print("└───────────────────────────────────────────")
 
+            # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            # EMIT STRUCTURED EVENT (Unity-style) with raw numeric values
+            try:
+                payload = {
+                    "L1": L1p, "T1": T1,
+                    "L2": L2p, "T2": T2,
+                    "L3": L3p, "T3": T3,
+                    "L4": L4p, "T4": T4,
+                    "SL": L2p,
+                    "Tradable": tradable,
+                }
+                bus.emit("divergence", payload)
+            except NameError:
+                # 'bus' not defined (pyee not installed or not imported) — safe no-op
+                pass
+            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
         # Footer bar
         print(bottom_bar)
 
         self._cur_seq = None
+
 
     def add_event(self, data: dict):
         seq = data.get("sequence")

@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Trading_Bot_Test\bull_div_reader_sync.py</StartupFile>
+    <StartupFile>Scripts\Trading_Bot_Test\bull_div_subscriber.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -24,6 +24,7 @@
   <ItemGroup>
     <Compile Include="Scripts\Trading_Bot_Test\bull_div_reader_sync.py" />
     <Compile Include="Scripts\Trading_Bot_Test\bull_div_reader.py" />
+    <Compile Include="Scripts\Trading_Bot_Test\bull_div_subscriber.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\container.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\enums.py" />
     <Compile Include="Scripts\z_Tests\Functioning_Tests\models.py" />
