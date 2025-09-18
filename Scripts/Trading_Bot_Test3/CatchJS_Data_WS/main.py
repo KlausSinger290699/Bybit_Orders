@@ -11,17 +11,15 @@ def main():
     ws_emit_bridge.start(WS_URI)
     sequence_store.init_storage()
 
-    p, context, page = playwright_session.open_session()
+    playwright, context, page = playwright_session.open_session()
 
     try:
         while True:
             page.wait_for_timeout(5_000)
-    except KeyboardInterrupt:
-        print("\n🛑 Stopped by user.")
     finally:
         sequence_store.flush()
         context.close()
-        p.stop()
+        playwright.stop()
         ws_emit_bridge.stop()
 
 

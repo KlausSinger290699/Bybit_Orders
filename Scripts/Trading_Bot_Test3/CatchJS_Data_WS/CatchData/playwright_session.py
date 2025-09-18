@@ -11,8 +11,8 @@ def open_session():
     """Start Playwright context + page, wire console handler, return (context, page)."""
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
 
-    p = sync_playwright().start()
-    context = p.chromium.launch_persistent_context(
+    playwright = sync_playwright().start()
+    context = playwright.chromium.launch_persistent_context(
         user_data_dir=str(PROFILE_DIR),
         headless=False,
     )
@@ -21,4 +21,4 @@ def open_session():
     page.goto(URL)
 
     print("🟢 Listening… prefix:", PREFIX)
-    return p, context, page
+    return playwright, context, page
