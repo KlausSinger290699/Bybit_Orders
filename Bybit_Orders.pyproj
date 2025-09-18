@@ -25,6 +25,8 @@
     <Compile Include="Scripts\Trading_Bot_Test2\CatchJS_Data_WS\CatchData\bull_div_reader_sync.py" />
     <Compile Include="Scripts\Trading_Bot_Test2\CatchJS_Data_WS\main.py" />
     <Compile Include="Scripts\Trading_Bot_Test2\CatchJS_Data_WS\PreprocessData\bybit_data_convertor.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\console_handler.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\playwright_session.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\PreprocessData\sequence_store.py" />
     <Compile Include="Scripts\Trading_Bot_Test2\CatchJS_Data_WS\SendData\log_uniform.py" />
     <Compile Include="Scripts\Trading_Bot_Test2\CatchJS_Data_WS\SendData\ws_emit_bridge.py" />
