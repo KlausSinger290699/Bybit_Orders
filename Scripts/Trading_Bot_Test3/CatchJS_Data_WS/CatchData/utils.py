@@ -1,5 +1,4 @@
 ﻿import json
-
 SEQ_TARGET_INNER = 58
 
 def extract_payload(console_text: str, prefix: str):
@@ -24,11 +23,9 @@ def is_divergence_event(p: dict) -> bool:
     return isinstance(l1, dict) and isinstance(l2, dict)
 
 def fmt_tf(sec) -> str:
-    table = {
-        60:"1m",120:"2m",180:"3m",300:"5m",600:"10m",900:"15m",
-        1200:"20m",1800:"30m",3600:"1h",7200:"2h",14400:"4h",
-        21600:"6h",43200:"12h",86400:"1d",
-    }
+    table = {60:"1m",120:"2m",180:"3m",300:"5m",600:"10m",900:"15m",
+             1200:"20m",1800:"30m",3600:"1h",7200:"2h",14400:"4h",
+             21600:"6h",43200:"12h",86400:"1d"}
     try:
         return table.get(int(sec), f"{int(sec)}s")
     except Exception:
@@ -70,5 +67,5 @@ def seq_bars(seq_no: int, tf_label: str):
     pad = max(0, SEQ_TARGET_INNER - len(inner_base))
     inner = inner_base + ("━" * pad)
     top = f"┏{inner}┓"
-    bottom = f"┗{'━' * (len(inner) + 2)}┛"  # +2 for visual symmetry
+    bottom = f"┗{'━' * (len(inner) + 2)}┛"
     return top, bottom
