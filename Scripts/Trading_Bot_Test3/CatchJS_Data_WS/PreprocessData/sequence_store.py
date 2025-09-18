@@ -70,3 +70,10 @@ def _dump_current_sequence():
         return
     out_path = SEQ_SAVE_DIR / f"seq_{_current_seq}.json"
     out_path.write_text(json.dumps(_seq_buf, indent=2))
+
+
+# --- Convenience wrapper ------------------------------------------------------
+
+def save_data_locally(processed: dict) -> None:
+    init_storage()
+    save_event(processed)
