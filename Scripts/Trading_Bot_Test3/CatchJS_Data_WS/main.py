@@ -4,25 +4,26 @@ from playwright.sync_api import sync_playwright
 
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData import ws_emit_bridge
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.CatchData import utils, printer
-from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import bybit_preprocessor
+from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import bybit_preprocessor, sequence_store
 
 # --- CONFIG ---
 PREFIX = "[AGGR INDICATOR]"
 URL = "https://charts.aggr.trade/koenzv4"
 PROFILE_DIR = r"C:\Users\Anwender\PlaywrightProfiles\aggr"
 WS_URI = "ws://127.0.0.1:8765"
-LOCAL_SAVE = Path("last_payload.json")
 
-# True = show sequences in console; False = print nothing
-PRINT_SEQUENCES = True
+PRINT_SEQUENCES = True  # True = show sequences, False = silent console
 
 
 def main():
     Path(PROFILE_DIR).mkdir(parents=True, exist_ok=True)
 
-    # Quiet websocket logging; we only want sequences in console
+    # quiet websocket logs; we only want sequences in console
     ws_emit_bridge.set_verbose(False)
     ws_emit_bridge.start(WS_URI)
+
+    # storage setup (creates data/ and per-run data/sequences_YYYYMMDD_HHMMSS/)
+    sequence_store.init_storage()
 
     console_printer = printer.Printer() if PRINT_SEQUENCES else None
 
@@ -45,16 +46,16 @@ def main():
             if not utils.is_divergence_event(payload):
                 return
 
-            # Preprocess (passthrough for now)
+            # preprocess (passthrough for now)
             processed = bybit_preprocessor.handle(payload)
 
-            # Save locally
-            LOCAL_SAVE.write_text(json.dumps(processed, indent=2))
+            # save single/sequence JSONs
+            sequence_store.save_event(processed)
 
-            # Send via WebSocket
+            # forward to websocket
             ws_emit_bridge.send(processed)
 
-            # Print sequences only
+            # pretty print (sequences only)
             if console_printer:
                 console_printer.add_event(processed)
 
@@ -69,6 +70,10 @@ def main():
             if console_printer:
                 console_printer.flush_now()
         finally:
+            # flush last buffered sequence to disk
+            sequence_store.flush()
+
+            # close browser + ws
             for pge in list(context.pages):
                 try:
                     pge.close()
