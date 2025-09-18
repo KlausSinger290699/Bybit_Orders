@@ -43,6 +43,10 @@ def extract_L1_L2(data: dict):
     piv = data.get("pivots") or {}
     return piv.get("L1") or {}, piv.get("L2") or {}
 
+def extract_H1_H2(event: dict):
+    piv = event.get("pivots") or {}
+    return piv.get("H1", {}), piv.get("H2", {})
+
 def to_bold_unicode(s: str) -> str:
     out = []
     for ch in s:
