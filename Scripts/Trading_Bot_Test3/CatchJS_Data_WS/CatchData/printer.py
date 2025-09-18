@@ -5,18 +5,18 @@ EVENTS_PER_SEQUENCE = 4  # adjust to your stream
 
 
 class SequencePrinter:
-    """Single-call printer: print_event(event) handles header → lines → footer."""
+    """Print: header → N lines → footer. One stream only (processed)."""
     def __init__(self, per_sequence: int = EVENTS_PER_SEQUENCE):
         self.per_sequence = per_sequence
         self.seq_id = None
         self.footer = ""
         self.count = 0
-        atexit.register(self._flush)
+        atexit.register(self.flush)
 
     def print_event(self, event: dict):
         seq = event.get("sequence")
         if seq != self.seq_id:
-            # start fresh sequence (previous sequences are considered closed)
+            # start fresh sequence
             tf = utils.choose_tf_label([event])
             top, self.footer = utils.seq_bars(seq, tf)
             print("\n" + top)
@@ -31,18 +31,14 @@ class SequencePrinter:
 
         self.count += 1
         if self.count >= self.per_sequence:
-            # print footer and reset immediately
             print(self.footer)
             self.seq_id = None
             self.footer = ""
             self.count = 0
 
-    # --- internals ---
-    def _flush(self):
-        """Auto-run on process exit: print trailing footer if a block is open."""
+    def flush(self):
         if self.footer:
             print(self.footer)
-        # reset (not strictly necessary at exit)
         self.seq_id = None
         self.footer = ""
         self.count = 0
