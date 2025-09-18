@@ -7,20 +7,15 @@ from typing import Optional
 import websockets
 from websockets import ConnectionClosedOK, ConnectionClosedError
 
-try:
-    from .log_uniform import UniformLogger  # optional; omit if not present
-    log = UniformLogger("WS-EMIT")
-except Exception:
-    class _Bare:
-        def starting(self): print("🚀 [WS-EMIT] Starting ...")
-        def waiting(self): print("⏳ [WS-EMIT] Waiting ...")
-        def connected(self): print("✅ [WS-EMIT] Connected.")
-        def ready(self): print("🟢 [WS-EMIT] Ready.")
-        def disconnected(self, code, reason): print(f"🔌 [WS-EMIT] Disconnected: code={code} reason={reason}")
-        def sent_wire(self, wire): print(f"📤 [WS-EMIT] Sent (json)   : {wire}")
-        def got_reply(self, reply): print(f"📨 [WS-EMIT] Got reply (raw): {reply}\n")
-        def stopped_by_user(self): print("\n🟥 [WS-EMIT] Stopped by user.")
-    log = _Bare()
+# --- verbosity toggle (default QUIET for clean console) ---
+_VERBOSE = False
+def set_verbose(flag: bool):
+    global _VERBOSE
+    _VERBOSE = bool(flag)
+
+def _p(msg: str):
+    if _VERBOSE:
+        print(msg)
 
 CONNECT_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
 
@@ -30,6 +25,7 @@ _thread: Optional[threading.Thread] = None
 _queue: Optional[asyncio.Queue] = None
 _stop_evt = threading.Event()
 
+
 async def _sender(ws, queue: asyncio.Queue):
     while not _stop_evt.is_set():
         item = await queue.get()
@@ -37,23 +33,25 @@ async def _sender(ws, queue: asyncio.Queue):
             break
         wire = json.dumps(item)
         await ws.send(wire)
-        log.sent_wire(wire)
+        _p(f"📤 [WS-EMIT] Sent (json)   : {wire}")
+
 
 async def _receiver(ws):
     try:
         async for msg in ws:
-            log.got_reply(msg)
+            _p(f"📨 [WS-EMIT] Got reply (raw): {msg}\n")
     except ConnectionClosedOK as e:
-        log.disconnected(e.code, getattr(e, "reason", ""))
+        _p(f"🔌 [WS-EMIT] Disconnected: code={e.code} reason={getattr(e, 'reason', '')}")
         raise
     except ConnectionClosedError as e:
-        log.disconnected(e.code, getattr(e, "reason", ""))
+        _p(f"🔌 [WS-EMIT] Disconnected: code={e.code} reason={getattr(e, 'reason', '')}")
         raise
+
 
 async def _session(uri: str, queue: asyncio.Queue):
     async with websockets.connect(uri, **CONNECT_KW) as ws:
-        log.connected()
-        log.ready()
+        _p("✅ [WS-EMIT] Connected.")
+        _p("🟢 [WS-EMIT] Ready.")
         send_task = asyncio.create_task(_sender(ws, queue))
         recv_task = asyncio.create_task(_receiver(ws))
         try:
@@ -71,20 +69,21 @@ async def _session(uri: str, queue: asyncio.Queue):
                     with suppress(asyncio.CancelledError):
                         await t
 
+
 async def _run(uri: str):
     global _queue
     _queue = asyncio.Queue()
-    log.starting()
+    _p("🚀 [WS-EMIT] Starting ...")
 
     backoff = 1
     while not _stop_evt.is_set():
-        log.waiting()
+        _p("⏳ [WS-EMIT] Waiting ...")
         try:
             await _session(uri, _queue)
             await asyncio.sleep(backoff)
             backoff = min(backoff * 2, 10)
         except (ConnectionRefusedError, OSError) as e:
-            log.disconnected(None, str(e))
+            _p(f"🔌 [WS-EMIT] Disconnected: code=? reason={e}")
             await asyncio.sleep(backoff)
             backoff = min(backoff * 2, 10)
         except (ConnectionClosedOK, ConnectionClosedError):
@@ -93,13 +92,14 @@ async def _run(uri: str):
         except asyncio.CancelledError:
             break
         except Exception as e:
-            log.disconnected(None, f"unexpected: {e}")
+            _p(f"🔌 [WS-EMIT] Disconnected: unexpected: {e}")
             await asyncio.sleep(1)
             backoff = min(backoff * 2, 10)
     try:
         await _queue.put(None)
     except Exception:
         pass
+
 
 def start(uri: str):
     global _URI, _loop, _thread
@@ -121,10 +121,12 @@ def start(uri: str):
     _thread = threading.Thread(target=_thread_target, name="ws-emit-bridge", daemon=True)
     _thread.start()
 
+
 def send(payload: dict):
     if _loop is None or _queue is None:
         return
     _loop.call_soon_threadsafe(_queue.put_nowait, payload)
+
 
 def stop():
     global _thread

@@ -1,3 +1,3 @@
 def handle(data: dict) -> dict:
-    # passthrough for now
+    """Stub for preprocessing Bybit-related data. Currently returns unchanged."""
     return data

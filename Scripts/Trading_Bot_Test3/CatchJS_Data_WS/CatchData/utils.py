@@ -1,8 +1,11 @@
 ﻿import json
 
-SEQ_TARGET_INNER = 58  # inner width between the corners
+# Inner width between the corners for the sequence bar
+SEQ_TARGET_INNER = 58
+
 
 def extract_payload(console_text: str, prefix: str):
+    """Extract JSON payload after the given prefix."""
     if prefix not in console_text:
         return False, None
     after = console_text.split(prefix, 1)[1].strip()
@@ -13,7 +16,12 @@ def extract_payload(console_text: str, prefix: str):
             return True, after
     return True, after
 
+
 def is_divergence_event(payload: dict) -> bool:
+    """
+    Accept only normalized 'aggr/indicator' events with basic shape and
+    present L1/L2 (either top-level or within 'pivots').
+    """
     if not isinstance(payload, dict):
         return False
     if payload.get("v") != 1:
@@ -28,9 +36,10 @@ def is_divergence_event(payload: dict) -> bool:
         return False
     if not isinstance(payload.get("status"), str):
         return False
-    # must have L1/L2 (either top-level or in pivots)
+
     l1, l2 = extract_L1_L2(payload)
     return isinstance(l1, dict) and isinstance(l2, dict)
+
 
 def fmt_tf(sec) -> str:
     table = {
@@ -44,6 +53,7 @@ def fmt_tf(sec) -> str:
     except Exception:
         return "?"
 
+
 def fmt_price(p):
     if isinstance(p, (int, float)):
         return f"{int(round(p))}"
@@ -52,13 +62,19 @@ def fmt_price(p):
     except Exception:
         return "?"
 
+
 def extract_L1_L2(data: dict):
+    """
+    Get L1/L2 dicts from either top-level fields or data['pivots'].
+    """
     if isinstance(data.get("L1"), dict) or isinstance(data.get("L2"), dict):
         return data.get("L1") or {}, data.get("L2") or {}
     piv = data.get("pivots") or {}
     return piv.get("L1") or {}, piv.get("L2") or {}
 
+
 def to_bold_unicode(s: str) -> str:
+    """Bold letters and digits with math bold unicode (for pretty headers)."""
     out = []
     for ch in s:
         o = ord(ch)
@@ -72,8 +88,12 @@ def to_bold_unicode(s: str) -> str:
             out.append(ch)
     return "".join(out)
 
-def _choose_tf_label(batch):
-    """Pick tf_label from the last event that has tf_label or tf_sec."""
+
+def _choose_tf_label(batch: list[dict]) -> str:
+    """
+    Pick tf label from the last event in batch that has tf_label or tf_sec.
+    This avoids '?' on the first sequence.
+    """
     for ev in reversed(batch):
         lbl = ev.get("tf_label")
         if lbl:
@@ -83,7 +103,8 @@ def _choose_tf_label(batch):
             return fmt_tf(sec)
     return "?"
 
-def seq_bars(seq_no, tf_label: str):
+
+def seq_bars(seq_no: int, tf_label: str):
     title = f"📌 {to_bold_unicode('Sequence')} \uFF03{to_bold_unicode(str(seq_no))} — {to_bold_unicode(tf_label)} "
     left_prefix = "━━ "
     inner_base = left_prefix + title

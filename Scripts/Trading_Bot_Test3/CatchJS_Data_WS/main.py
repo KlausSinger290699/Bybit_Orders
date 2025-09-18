@@ -13,12 +13,14 @@ PROFILE_DIR = r"C:\Users\Anwender\PlaywrightProfiles\aggr"
 WS_URI = "ws://127.0.0.1:8765"
 LOCAL_SAVE = Path("last_payload.json")
 
-PRINT_SEQUENCES = True      # True = show sequences, False = print nothing
+# True = show sequences in console; False = print nothing
+PRINT_SEQUENCES = True
+
 
 def main():
     Path(PROFILE_DIR).mkdir(parents=True, exist_ok=True)
 
-    # quiet websocket logging; we only want sequences in console
+    # Quiet websocket logging; we only want sequences in console
     ws_emit_bridge.set_verbose(False)
     ws_emit_bridge.start(WS_URI)
 
@@ -40,14 +42,19 @@ def main():
             ok, payload = utils.extract_payload(raw, PREFIX)
             if not ok or not isinstance(payload, dict):
                 return
-            # *** ONLY accept normalized aggr/indicator events ***
             if not utils.is_divergence_event(payload):
                 return
 
+            # Preprocess (passthrough for now)
             processed = bybit_preprocessor.handle(payload)
+
+            # Save locally
             LOCAL_SAVE.write_text(json.dumps(processed, indent=2))
+
+            # Send via WebSocket
             ws_emit_bridge.send(processed)
 
+            # Print sequences only
             if console_printer:
                 console_printer.add_event(processed)
 
@@ -63,11 +70,16 @@ def main():
                 console_printer.flush_now()
         finally:
             for pge in list(context.pages):
-                try: pge.close()
-                except Exception: pass
-            try: context.close()
-            except Exception: pass
+                try:
+                    pge.close()
+                except Exception:
+                    pass
+            try:
+                context.close()
+            except Exception:
+                pass
             ws_emit_bridge.stop()
+
 
 if __name__ == "__main__":
     main()

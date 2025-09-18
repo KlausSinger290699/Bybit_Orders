@@ -1,6 +1,7 @@
 ﻿from typing import Optional
 from . import utils
 
+
 class Printer:
     """Pretty console output for divergence events (display only)."""
 
@@ -12,7 +13,7 @@ class Printer:
         if not self._buf or self._cur_seq is None:
             return
 
-        # sort by L1.time (like your working version)
+        # Sort by L1.time — matches your original behavior
         def l1_time(ev: dict):
             l1, _ = utils.extract_L1_L2(ev)
             t = l1.get("time")
