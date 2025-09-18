@@ -111,5 +111,7 @@ def seq_bars(seq_no: int, tf_label: str):
     fill_len = max(0, SEQ_TARGET_INNER - len(inner_base))
     inner_line = inner_base + ("━" * fill_len)
     top = f"┏{inner_line}┓"
-    bottom = f"┗{'━' * len(inner_line)}┛"
+    # bottom bar is 2 dashes longer to visually match top
+    bottom = f"┗{'━' * (len(inner_line) + 2)}┛"
     return top, bottom
+

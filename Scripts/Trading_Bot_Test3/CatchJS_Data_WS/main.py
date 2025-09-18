@@ -17,15 +17,11 @@ PRINT_SEQUENCES = True  # True = show sequences, False = silent console
 
 def main():
     Path(PROFILE_DIR).mkdir(parents=True, exist_ok=True)
-
-    # quiet websocket logs; we only want sequences in console
     ws_emit_bridge.set_verbose(False)
     ws_emit_bridge.start(WS_URI)
-
-    # storage setup (creates data/ and per-run data/sequences_YYYYMMDD_HHMMSS/)
     sequence_store.init_storage()
 
-    console_printer = printer.Printer() if PRINT_SEQUENCES else None
+    console_printer = printer.SequencePrinter() if PRINT_SEQUENCES else None
 
     with sync_playwright() as p:
         context = p.chromium.launch_persistent_context(
@@ -46,18 +42,21 @@ def main():
             if not utils.is_divergence_event(payload):
                 return
 
-            # preprocess (passthrough for now)
             processed = bybit_preprocessor.handle(payload)
-
-            # save single/sequence JSONs
             sequence_store.save_event(processed)
-
-            # forward to websocket
             ws_emit_bridge.send(processed)
 
-            # pretty print (sequences only)
             if console_printer:
-                console_printer.add_event(processed)
+                seq_id = processed.get("sequence")
+                tf_label = utils._choose_tf_label([processed])
+
+                # If a new sequence starts, close the old one before printing new header
+                if seq_id != console_printer.current_seq_id:
+                    console_printer.end_if_open()
+                    console_printer.start(seq_id, tf_label)
+
+                # Print the line (auto-closes on Nth line if needed)
+                console_printer.add(processed)
 
         page.on("console", on_console)
         page.goto(URL)
@@ -68,12 +67,11 @@ def main():
                 page.wait_for_timeout(5_000)
         except KeyboardInterrupt:
             if console_printer:
-                console_printer.flush_now()
+                console_printer.end_if_open()
         finally:
-            # flush last buffered sequence to disk
             sequence_store.flush()
-
-            # close browser + ws
+            if console_printer:
+                console_printer.end_if_open()
             for pge in list(context.pages):
                 try:
                     pge.close()

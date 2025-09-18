@@ -1,53 +1,57 @@
-﻿from typing import Optional
-from . import utils
+﻿from . import utils
 
+EVENTS_PER_SEQUENCE = 4  # ← adjust to your stream
 
-class Printer:
-    """Pretty console output for divergence events (display only)."""
+class SequencePrinter:
+    """Top → lines → bottom. Close on Nth line OR explicitly when told."""
+    def __init__(self, per_sequence: int = EVENTS_PER_SEQUENCE):
+        self.per_sequence = per_sequence
+        self.current_seq_id = None
+        self.lines_in_current = 0
+        self._open = False
+        self._bottom_bar = None
 
-    def __init__(self):
-        self._cur_seq: Optional[int] = None
-        self._buf: list[dict] = []
+    def start(self, seq_id: int, tf_label: str):
+        """Start a new sequence (header now). Assumes caller closed previous."""
+        top, bottom = utils.seq_bars(seq_id, tf_label)
+        print("\n" + top)
+        self.current_seq_id = seq_id
+        self._bottom_bar = bottom
+        self.lines_in_current = 0
+        self._open = True
 
-    def _flush(self):
-        if not self._buf or self._cur_seq is None:
-            return
+    def add(self, event: dict):
+        """Print one line; if Nth line, print footer now and reset."""
+        if not self._open:
+            # Defensive: auto-start with this event
+            seq_id = event.get("sequence")
+            tf_label = utils._choose_tf_label([event])
+            self.start(seq_id, tf_label)
 
-        # Sort by L1.time — matches your original behavior
-        def l1_time(ev: dict):
-            l1, _ = utils.extract_L1_L2(ev)
-            t = l1.get("time")
-            return t if isinstance(t, (int, float)) else float("inf")
+        side = event.get("side", "?")
+        side_icon = "🟢" if side == "bull" else "🔴" if side == "bear" else "⚪"
+        status_icon = event.get("status", "?")
 
-        batch = sorted(self._buf, key=l1_time)
-        self._buf.clear()
+        l1, l2 = utils.extract_L1_L2(event)
+        l1_price = utils.fmt_price(l1.get("price"))
+        l2_price = utils.fmt_price(l2.get("price"))
 
-        tf_label = utils._choose_tf_label(batch)
-        top_bar, bottom_bar = utils.seq_bars(self._cur_seq, tf_label)
-        print("\n" + top_bar)
+        print(f"{status_icon} {side_icon} | {l1_price}-{l2_price}")
 
-        for ev in batch:
-            side = ev.get("side", "?")
-            side_icon = "🟢" if side == "bull" else "🔴" if side == "bear" else "⚪"
-            status_icon = ev.get("status", "?")
+        self.lines_in_current += 1
+        if self.lines_in_current >= self.per_sequence:
+            self._print_footer_and_reset()
 
-            l1, l2 = utils.extract_L1_L2(ev)
-            l1p = utils.fmt_price(l1.get("price"))
-            l2p = utils.fmt_price(l2.get("price"))
+    def end_if_open(self):
+        """Explicitly close the current sequence (used on seq change / shutdown)."""
+        if self._open:
+            self._print_footer_and_reset()
 
-            print(f"{status_icon} {side_icon} | {l1p}-{l2p}")
-
-        print(bottom_bar)
-        self._cur_seq = None
-
-    def add_event(self, ev: dict):
-        seq = ev.get("sequence")
-        if self._cur_seq is None:
-            self._cur_seq = seq
-        elif seq != self._cur_seq:
-            self._flush()
-            self._cur_seq = seq
-        self._buf.append(ev)
-
-    def flush_now(self):
-        self._flush()
+    # --- internals ---
+    def _print_footer_and_reset(self):
+        if self._open and self._bottom_bar:
+            print(self._bottom_bar)
+        self._open = False
+        self._bottom_bar = None
+        self.current_seq_id = None
+        self.lines_in_current = 0
