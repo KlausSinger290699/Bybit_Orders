@@ -6,7 +6,7 @@ from typing import Dict, Optional, Tuple
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 # from pyee import EventEmitter  # no longer needed for WS path
-import ws_emit_bridge  # NEW: background websocket emitter
+from Scripts.Trading_Bot_Test2.CatchJS_Data_WS.SendData import ws_emit_bridge 
 
 # bus = EventEmitter()  # no longer used
 
