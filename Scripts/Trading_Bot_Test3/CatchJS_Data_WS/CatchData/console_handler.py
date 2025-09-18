@@ -1,10 +1,12 @@
-from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.CatchData import utils, printer
-from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import bybit_preprocessor, sequence_store
-from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData import ws_emit_bridge
+﻿from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.CatchData import utils
 
-console = printer.SequencePrinter()
 
-def handle_message(msg, prefix="[AGGR INDICATOR]"):
+def extract_event(msg, prefix="[AGGR INDICATOR]"):
+    """Extract and validate a raw event from a console message.
+
+    Returns:
+        dict | None: raw payload dict if valid, else None.
+    """
     try:
         raw = msg.text()
     except Exception:
@@ -12,11 +14,8 @@ def handle_message(msg, prefix="[AGGR INDICATOR]"):
 
     ok, payload = utils.extract_payload(raw, prefix)
     if not ok or not isinstance(payload, dict):
-        return
+        return None
     if not utils.is_divergence_event(payload):
-        return
+        return None
 
-    evt = bybit_preprocessor.handle(payload)
-    sequence_store.save_event(evt)
-    ws_emit_bridge.send(evt)
-    console.print_event(evt)
+    return payload
