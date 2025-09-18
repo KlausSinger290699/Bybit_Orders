@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>adc3aa57-c16f-4852-a87e-e5d4c9ea21af</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\bull_div_reader_sync.py</StartupFile>
+    <StartupFile>Scripts\Trading_Bot_Test3\CatchJS_Data_WS\main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -34,9 +34,12 @@
     <Compile Include="Scripts\Trading_Bot_Test2\Use_Data_WS\main.py" />
     <Compile Include="Scripts\Trading_Bot_Test2\Use_Data_WS\PreProcessData\is_tradable_data.py" />
     <Compile Include="Scripts\Trading_Bot_Test2\Use_Data_WS\PreProcessData\tradable_data_container.py" />
-    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\bull_div_reader_sync.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\printer.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\Unused\bull_div_reader_sync.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\PreProcessData\strategy_engine.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\utils.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\main.py" />
-    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\PreprocessData\bybit_data_convertor.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\PreprocessData\bybit_preprocessor.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\SendData\log_uniform.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\Unused\bull_div_reader_async.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\Unused\bull_div_subscriber.py" />

@@ -6,8 +6,7 @@ from typing import Dict, Optional, Tuple
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 # from pyee import EventEmitter  # no longer needed for WS path
-from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData import ws_emit_bridge 
-
+from Scripts.Trading_Bot_Test2.CatchJS_Data_WS.SendData import ws_emit_bridge 
 
 # bus = EventEmitter()  # no longer used
 
@@ -122,30 +121,16 @@ def seq_bars(seq_no: int, tf_label: str):
 
 # --- PRINTER (sequence-buffered, ordered by L1.time) ------------------------
 
-# --- PRINTER (display-only; no selection, no WS send) ------------------------
-
 class Printer:
-    """Pretty console output for divergence events.
-    Responsibilities:
-      - Buffer events per sequence id.
-      - Sort buffered events by L1.time for readability.
-      - Render a compact list under a bold header/footer.
-    Non-responsibilities (moved elsewhere):
-      - Building payloads
-      - Deciding tradability
-      - Sending over WebSocket
-      - Any strategy logic
-    """
-
     def __init__(self):
-        self._cur_seq: Optional[int] = None
-        self._buf: list[dict] = []  # raw event dicts (already validated upstream)
+        self._cur_seq = None
+        self._buf = []  # list of raw event dicts
 
     def _flush(self):
         if not self._buf or self._cur_seq is None:
             return
 
-        def l1_time(ev: dict):
+        def l1_time(ev):
             l1, _ = extract_L1_L2(ev)
             t = l1.get("time")
             return t if isinstance(t, (int, float)) else float("inf")
@@ -153,38 +138,88 @@ class Printer:
         batch = sorted(self._buf, key=l1_time)
         self._buf.clear()
 
-        # Header/footer bars
-        tf_label = (batch[-1].get("tf_label") or fmt_tf(batch[-1].get("tf_sec"))) if batch else "?"
-        top_bar, bottom_bar = seq_bars(self._cur_seq, tf_label)
+        # Header (Option A, bold unicode)
+        tf_label_seq = (batch[-1].get("tf_label") or fmt_tf(batch[-1].get("tf_sec"))) if batch else "?"
+        top_bar, bottom_bar = seq_bars(self._cur_seq, tf_label_seq)
         print("\n" + top_bar)
 
-        # One line per event
-        for ev in batch:
-            side = ev.get("side", "?")
-            side_icon = "🟢" if side == "bull" else "🔴" if side == "bear" else "⚪"
-            status_icon = ev.get("status", "?")
-
-            l1, l2 = extract_L1_L2(ev)
+        # List rows (timeframe omitted; shown in header)
+        for data in batch:
+            side = data.get("side", "?")
+            side_icon = "🟢" if side == "bull" else "🔴"
+            status_icon = data.get("status", "?")
+            l1, l2 = extract_L1_L2(data)
             l1p = fmt_price(l1.get("price"))
             l2p = fmt_price(l2.get("price"))
-
             print(f"{status_icon} {side_icon} | {l1p}-{l2p}")
 
+        # === Only one summary per sequence: compare the last two elements ===
+        if len(batch) >= 2:
+            prev = batch[-2]
+            curr = batch[-1]
+
+            pL1, pL2 = extract_L1_L2(prev)
+            cL1, cL2 = extract_L1_L2(curr)
+
+            L1p = pL1.get("price"); T1 = pL1.get("time")
+            L2p = pL2.get("price"); T2 = pL2.get("time")
+            L3p = cL1.get("price"); T3 = cL1.get("time")
+            L4p = cL2.get("price"); T4 = cL2.get("time")
+
+            tf_label = curr.get("tf_label") or fmt_tf(curr.get("tf_sec"))
+            side_icon = "🟢" if curr.get("side") == "bull" else "🔴"
+
+            # tradable rule: curr must be ❔ and previous L2.time == current L1.time
+            l2_eq_l1 = (isinstance(T2, (int, float)) and T2 == T3)
+            tradable = (curr.get("status") == "❔" and l2_eq_l1)
+
+            header = (f"{side_icon}  ✅ TRADABLE | TF {tf_label}"
+                      if tradable
+                      else f"{side_icon}  ❌ Not tradable (L2.prev ≠ L1.curr) | TF {tf_label}")
+
+            # Pretty boxed panel (your exact layout)
+            print(f"\n{header}")
+            print("┌───────────────────────────────────────────")
+            print(f"│ L1 = {fmt_price(L1p):<6}   T1 = {T1}   (prev.L1)")
+            print(f"│ L2 = {fmt_price(L2p):<6}   T2 = {T2}   (prev.L2)")
+            print(f"│ L3 = {fmt_price(L3p):<6}   T3 = {T3}   (curr.L1)")
+            print(f"│ L4 = {fmt_price(L4p):<6}   T4 = {T4}   (curr.L2)")
+            print("│")
+            print(f"│ SL = {fmt_price(L2p)}   (SL = L2.prev = L1.curr)")
+            print("└───────────────────────────────────────────")
+
+            # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            # SEND OVER WEBSOCKET (non-blocking, background sender)
+            payload = {
+                "L1": L1p, "T1": T1,
+                "L2": L2p, "T2": T2,
+                "L3": L3p, "T3": T3,
+                "L4": L4p, "T4": T4,
+                "SL": L2p,
+                "Tradable": tradable,
+            }
+            ws_emit_bridge.send(payload)
+            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        # Footer bar
         print(bottom_bar)
+
         self._cur_seq = None
 
-    def add_event(self, ev: dict):
-        """Append an event to the current sequence block; flush on sequence change."""
-        seq = ev.get("sequence")
+
+    def add_event(self, data: dict):
+        seq = data.get("sequence")
+
         if self._cur_seq is None:
             self._cur_seq = seq
         elif seq != self._cur_seq:
+            # sequence changed → flush previous block, start new
             self._flush()
             self._cur_seq = seq
-        self._buf.append(ev)
+
+        self._buf.append(data)
 
     def flush_now(self):
-        """Force flush (e.g., on shutdown)."""
         self._flush()
 
 
