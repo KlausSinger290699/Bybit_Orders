@@ -1,7 +1,15 @@
-﻿import ccxt
+﻿# bybit_highs_lows_15m_batch.py
+# Replace L1/L2 with Bybit 15m lows (−1h aggr→Bybit) and insert H1 high after L2.
+# Reuses fully-enriched results when thread_id or pair_id matches a prior entry.
+
+from __future__ import annotations
+
 import json
 import time
 from threading import Thread, Event, Lock
+from typing import Any, Dict, List, Tuple, Optional
+
+import ccxt
 
 # -------------------- config --------------------
 DEFAULT_TYPE = "future"
@@ -76,7 +84,7 @@ def _fetch_ohlcv_range(ex, symbol, timeframe, start_ms, end_ms, limit=1000, *, p
       and clear the line on completion (NO '... done.' message).
     - If progress=False, run silently.
     """
-    label = f"Fetching {timeframe} OHLCV for {symbol}"  # printed only while spinner is active
+    label = f"Fetching {timeframe} OHLCV for {symbol}"
 
     def _do_fetch():
         out, since = [], start_ms
@@ -115,7 +123,7 @@ def _low_for_ts(candles: list[list], ts_ms: int, step_ms: int) -> float:
     for o, _o, _h, l, _c, _v in candles:
         if o <= ts_ms < o + step_ms:
             return float(l)
-    raise RuntimeError(f"15m candle not found for ts={ts_ms}")
+    raise RuntimeError(f"{TF} candle not found for ts={ts_ms}")
 
 def _h1_high_between(candles: list[list], start_ms: int, end_ms: int) -> tuple[float, int]:
     w = [c for c in candles if start_ms <= c[0] <= end_ms]
@@ -129,7 +137,7 @@ def aggr_bybit_minus_1h(ts_ms: int) -> int:
 
 def _with_h1_after_l2(s: dict, *, l1_low: float, l2_low: float, h1_price: float, h1_ts_ms: int) -> dict:
     """Return a new dict where H1 appears immediately after L2 (readability)."""
-    out = {}
+    out: Dict[str, Any] = {}
     for k in s.keys():
         if k == "L1":
             out["L1"] = {**s["L1"], "price": l1_low}
@@ -147,27 +155,110 @@ def _with_h1_after_l2(s: dict, *, l1_low: float, l2_low: float, h1_price: float,
         out["H1"] = {"time": h1_ts_ms // 1000, "price": h1_price}
     return out
 
+# -------------------- Reuse/Caching Layer (exact-id reuse only) --------------
+class PivotCache:
+    """Minimal cache for previously computed pivots keyed by thread_id/pair_id."""
+    def __init__(self):
+        self._by_thread: Dict[str, Dict[str, Any]] = {}
+        self._by_pair: Dict[str, Dict[str, Any]] = {}
+
+    def put(self, item: Dict[str, Any]) -> None:
+        tid = item.get("thread_id")
+        pid = item.get("pair_id")
+        if tid:
+            self._by_thread[tid] = item
+        if pid:
+            self._by_pair[pid] = item
+
+    def get_by_thread(self, thread_id: Optional[str]) -> Optional[Dict[str, Any]]:
+        return self._by_thread.get(thread_id) if thread_id else None
+
+    def get_by_pair(self, pair_id: Optional[str]) -> Optional[Dict[str, Any]]:
+        return self._by_pair.get(pair_id) if pair_id else None
+
+_CACHE = PivotCache()
+
+def _is_enriched(x: Dict[str, Any]) -> bool:
+    try:
+        return (
+            isinstance(x["L1"]["price"], (int, float)) and
+            isinstance(x["L2"]["price"], (int, float)) and
+            isinstance(x["H1"]["price"], (int, float)) and
+            isinstance(x["H1"]["time"], (int, float))
+        )
+    except Exception:
+        return False
+
+def plan_reuse(items: List[Dict[str, Any]], cache: PivotCache
+               ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """
+    Decide which items can be reused vs. need compute.
+    Returns (to_compute, reused_ready)
+
+    Rules:
+      - If (thread_id) OR (pair_id) found in cache with enriched L1/L2/H1, reuse entirely.
+      - No special handling for '❔' — anything else recomputes fully.
+    """
+    to_compute: List[Dict[str, Any]] = []
+    reused: List[Dict[str, Any]] = []
+
+    for s in items:
+        prev = cache.get_by_thread(s.get("thread_id")) or cache.get_by_pair(s.get("pair_id"))
+        if prev and _is_enriched(prev):
+            reused.append({
+                **s,
+                "L1": {**s.get("L1", {}), "price": prev["L1"]["price"]},
+                "L2": {**s.get("L2", {}), "price": prev["L2"]["price"]},
+                "H1": {"time": prev["H1"]["time"], "price": prev["H1"]["price"]},
+            })
+        else:
+            to_compute.append(s)
+
+    return to_compute, reused
+
 # -------------------- public API --------------------
-def process(rawdata: list[dict], *, ticker: str = "BTC", progress: bool = False) -> list[dict]:
+def process(rawdata: List[Dict[str, Any]], *, ticker: str = "BTC", progress: bool = False,
+            cache: PivotCache = _CACHE) -> List[Dict[str, Any]]:
     """
     Replace L1/L2 with Bybit 15m lows (−1h aggr→Bybit) and insert H1 high after L2.
+    Reuse only when exact thread_id or pair_id matches a previously enriched entry.
     Set progress=True to show a fetching spinner (no 'done' message).
     """
-    ex = init_bybit_public()  # safe: singleton; prints only on first load
+    if not rawdata:
+        return []
+
+    # 1) reuse decision
+    to_compute, reused_ready = plan_reuse(rawdata, cache)
+
+    # 2) if nothing to compute, return reused
+    if not to_compute:
+        return reused_ready
+
+    # 3) compute candles only for what's left
+    ex = init_bybit_public()
     symbol = symbol_for(ticker)
     step = _step_ms(TF)
 
-    # unified fetch window across all shifted L1/L2
-    all_ts = []
-    for s in rawdata:
-        all_ts.append(aggr_bybit_minus_1h(int(s["L1"]["time"]) * 1000))
-        all_ts.append(aggr_bybit_minus_1h(int(s["L2"]["time"]) * 1000))
+    # unified fetch window across all shifted L1/L2 (compute-only set)
+    all_ts: List[int] = []
+    for s in to_compute:
+        if "L1" in s and "L2" in s:
+            all_ts.append(aggr_bybit_minus_1h(int(s["L1"]["time"]) * 1000))
+            all_ts.append(aggr_bybit_minus_1h(int(s["L2"]["time"]) * 1000))
+
+    if not all_ts:
+        # nothing needs data; return what we have
+        for r in reused_ready:
+            if _is_enriched(r):
+                cache.put(r)
+        return reused_ready
+
     start_ms = _bucket_open(min(all_ts), step) - step
     end_ms   = _bucket_open(max(all_ts), step) + step
     candles = _fetch_ohlcv_range(ex, symbol, TF, start_ms, end_ms, limit=1000, progress=progress)
 
-    updated = []
-    for s in rawdata:
+    computed: List[Dict[str, Any]] = []
+    for s in to_compute:
         l1_ts = aggr_bybit_minus_1h(int(s["L1"]["time"]) * 1000)
         l2_ts = aggr_bybit_minus_1h(int(s["L2"]["time"]) * 1000)
 
@@ -177,9 +268,26 @@ def process(rawdata: list[dict], *, ticker: str = "BTC", progress: bool = False)
         h1_price, h1_ts = _h1_high_between(candles, t_start, t_end)
 
         s2 = _with_h1_after_l2(s, l1_low=l1_low, l2_low=l2_low, h1_price=h1_price, h1_ts_ms=h1_ts)
-        updated.append(s2)
+        computed.append(s2)
+        cache.put(s2)  # update cache with fully enriched entry
 
-    return updated
+    # 4) merge in original order (computed overrides reused when both exist)
+    def _fid(x: Dict[str, Any]) -> Tuple[str, str]:
+        return (x.get("thread_id", ""), x.get("pair_id", ""))
+
+    comp_idx = { _fid(x): x for x in computed }
+    out: List[Dict[str, Any]] = []
+    for s in rawdata:
+        key = _fid(s)
+        if key in comp_idx:
+            out.append(comp_idx[key])
+        else:
+            rr = next((r for r in reused_ready if _fid(r) == key), s)
+            out.append(rr)
+            if _is_enriched(rr):
+                cache.put(rr)
+
+    return out
 
 # -------------------- standalone sample --------------------
 SAMPLE_SEQ_LIST = [
@@ -217,21 +325,20 @@ SAMPLE_SEQ_LIST = [
   }
 ]
 
-def print_new_lows_and_highs(sample_seq_list, updated):
-    # Pretty console preview (sample-only): show original → updated + H1
+def _print_preview(sample_seq_list, updated):
     for orig, new in zip(sample_seq_list, updated):
         l1_old = orig["L1"]["price"]
         l2_old = orig["L2"]["price"]
         l1_new = new["L1"]["price"]
         l2_new = new["L2"]["price"]
         h1_p   = new["H1"]["price"]
-        h1_ts  = new["H1"]["time"] * 1000  # ms for consistency with logs
+        h1_ts  = new["H1"]["time"] * 1000  # ms for logs
         print(f"{new.get('status','')} {new.get('side','')} | "
               f"L1 {l1_old} → {l1_new} | L2 {l2_old} → {l2_new} | "
               f"H1 {h1_p} @ {h1_ts}")
 
 if __name__ == "__main__":
-    # Standalone example: show a fetching spinner with no trailing "... done."
-    updated = process(SAMPLE_SEQ_LIST, ticker="BTC", progress=True)
-    print_new_lows_and_highs(SAMPLE_SEQ_LIST, updated)
-    print("\n" + json.dumps(updated, ensure_ascii=False, indent=2))
+    if SAMPLE_SEQ_LIST:
+        updated = process(SAMPLE_SEQ_LIST, ticker="BTC", progress=True)
+        _print_preview(SAMPLE_SEQ_LIST, updated)
+        print("\n" + json.dumps(updated, ensure_ascii=False, indent=2))
