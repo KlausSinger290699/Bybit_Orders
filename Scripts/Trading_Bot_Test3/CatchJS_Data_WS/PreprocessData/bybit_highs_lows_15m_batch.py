@@ -10,7 +10,10 @@ TF = "15m"
 AGGR_BYBIT_HOUR_SHIFT_MS = -3_600_000  # -1h
 
 def symbol_for(ticker: str) -> str:
-    return f"{ticker.strip().upper()}/{QUOTE}{CONTRACT_SUFFIX}"
+    if not isinstance(ticker, str):
+        raise TypeError(f"ticker must be str, got {type(ticker).__name__}")
+    return f"{ticker.strip().upper()}/USDT:USDT"
+
 
 def init_bybit_public() -> ccxt.bybit:
     ex = ccxt.bybit({"enableRateLimit": True})

@@ -1,6 +1,7 @@
 ﻿# CatchData/playwright_session.py
 from pathlib import Path
 from collections import defaultdict
+from time import monotonic
 from playwright.sync_api import sync_playwright
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.z_Helpers import utils
 
@@ -8,12 +9,15 @@ PROFILE_DIR = Path(r"C:\Users\Anwender\PlaywrightProfiles\aggr")
 URL = "https://charts.aggr.trade/koenzv4"
 PREFIX = "[AGGR INDICATOR]"
 
-def iter_blocks():
+def iter_blocks_latest(debounce_ms: int = 80):
     """
-    Stream complete blocks forever. Each yielded item is a list[dict] of all events
-    that share the same global sequence number. No duplicates.
+    Stream ONLY the latest complete block.
+    - Coalesces events by sequence.
+    - Always jumps to the highest sequence (tail-drop).
+    - Waits a tiny debounce so all events of that sequence arrive.
     """
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    debounce_s = debounce_ms / 1000.0
 
     with sync_playwright() as pw:
         context = pw.chromium.launch_persistent_context(
@@ -22,9 +26,9 @@ def iter_blocks():
         )
         page = context.new_page()
 
-        # sequence -> list of events
-        buffers: dict[int, list] = defaultdict(list)
-        last_yielded_seq: int | None = None
+        buffers: dict[int, list] = defaultdict(list)  # seq -> list[evt]
+        touched_at: dict[int, float] = {}            # seq -> last update time
+        last_yielded: int | None = None
 
         def _on_console(msg):
             try:
@@ -41,36 +45,43 @@ def iter_blocks():
             seq = payload.get("sequence")
             if isinstance(seq, int):
                 buffers[seq].append(payload)
+                touched_at[seq] = monotonic()
 
         page.on("console", _on_console)
 
         try:
             page.goto(URL)
             print("🟢 Listening… prefix:", PREFIX)
-            # sanity probe (ignored by is_divergence_event)
             page.evaluate(f"console.log('{PREFIX} __probe__ console-wired')")
 
             while True:
-                # look for the next sequence after last_yielded_seq
-                ready = sorted(
-                    s for s in buffers.keys()
-                    if (last_yielded_seq is None or s > last_yielded_seq)
-                )
+                if not buffers:
+                    page.wait_for_timeout(50)
+                    continue
 
-                if ready:
-                    s = ready[0]
-                    block = buffers.pop(s, [])
-                    last_yielded_seq = s
+                # Jump straight to the newest sequence we’ve seen.
+                newest = max(buffers.keys())
 
-                    # keep memory small: drop old sequences
-                    for k in list(buffers.keys()):
-                        if k <= last_yielded_seq - 3:
-                            buffers.pop(k, None)
+                # Small debounce so all events for `newest` arrive
+                # (especially when multiple threads emit for the same seq).
+                if monotonic() - touched_at.get(newest, 0.0) < debounce_s:
+                    page.wait_for_timeout(10)
+                    continue
 
-                    if block:
-                        yield block
+                # Yield only the newest and drop everything older.
+                block = buffers.pop(newest, [])
+                touched_at.pop(newest, None)
+                # hard drop older sequences to avoid backlog
+                for k in list(buffers.keys()):
+                    if k < newest:
+                        buffers.pop(k, None)
+                        touched_at.pop(k, None)
+
+                if block and newest != last_yielded:
+                    last_yielded = newest
+                    yield block
                 else:
-                    page.wait_for_timeout(100)
+                    page.wait_for_timeout(10)
 
         finally:
             try:
@@ -78,9 +89,5 @@ def iter_blocks():
             except Exception:
                 pass
 
-def get_raw():
-    """
-    Backward-compatible: return just the next full block once.
-    """
-    for block in iter_blocks():
-        return block
+# Backward-compatible alias if you call iter_blocks() elsewhere:
+iter_blocks = iter_blocks_latest

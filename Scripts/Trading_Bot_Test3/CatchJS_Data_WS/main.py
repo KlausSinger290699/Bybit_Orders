@@ -6,6 +6,6 @@ from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.z_Helpers import printer
 for raw_data in playwright_session.iter_blocks():   # ← stream forever
     ordered_raw_data = sequence_order.order_by_l1_time(raw_data)
     printer.print_sequence(ordered_raw_data, tag="Aggr")
-    #processed_data = bybit_preprocessor.process(ordered_raw_data, False)
-    #printer.print_sequence(processed_data, tag = "Bybit")
-    #ws_emit_bridge.send(processed_data)
+    processed_data = bybit_preprocessor.process(ordered_raw_data)
+    printer.print_sequence(processed_data, tag = "Bybit")
+    ws_emit_bridge.send(processed_data)
