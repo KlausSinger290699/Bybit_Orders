@@ -7,7 +7,7 @@ def _process_one(payload: dict) -> dict:
     processed = dict(payload)
 
     # TODO: Find a good place to save locally store data without github syncing it
-    # sequence_store.save_data_locally(processed)
+    #sequence_store.save_data_locally(processed)
     return processed
 
 def process(data):
