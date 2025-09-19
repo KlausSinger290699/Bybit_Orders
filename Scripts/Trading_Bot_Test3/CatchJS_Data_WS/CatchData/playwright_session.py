@@ -1,18 +1,17 @@
 ﻿# CatchData/playwright_session.py
 from pathlib import Path
-from collections import defaultdict, deque
+from collections import defaultdict
 from playwright.sync_api import sync_playwright
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.z_Helpers import utils
 
 PROFILE_DIR = Path(r"C:\Users\Anwender\PlaywrightProfiles\aggr")
 URL = "https://charts.aggr.trade/koenzv4"
 PREFIX = "[AGGR INDICATOR]"
-EVENTS_PER_SEQUENCE = 4  # must match printer
 
 def iter_blocks():
     """
-    Stream complete blocks forever. Each yielded item is a list[dict] of length
-    EVENTS_PER_SEQUENCE for the next sequence in ascending order. No duplicates.
+    Stream complete blocks forever. Each yielded item is a list[dict] of all events
+    that share the same global sequence number. No duplicates.
     """
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -23,8 +22,8 @@ def iter_blocks():
         )
         page = context.new_page()
 
-        # seq -> deque of most-recent events for that seq
-        buffers: dict[int, deque] = defaultdict(lambda: deque(maxlen=EVENTS_PER_SEQUENCE))
+        # sequence -> list of events
+        buffers: dict[int, list] = defaultdict(list)
         last_yielded_seq: int | None = None
 
         def _on_console(msg):
@@ -52,24 +51,26 @@ def iter_blocks():
             page.evaluate(f"console.log('{PREFIX} __probe__ console-wired')")
 
             while True:
-                # choose the *next* sequence after last_yielded_seq that is full
-                ready = sorted(s for s in buffers.keys()
-                               if len(buffers[s]) >= EVENTS_PER_SEQUENCE
-                               and (last_yielded_seq is None or s > last_yielded_seq))
+                # look for the next sequence after last_yielded_seq
+                ready = sorted(
+                    s for s in buffers.keys()
+                    if (last_yielded_seq is None or s > last_yielded_seq)
+                )
 
                 if ready:
                     s = ready[0]
-                    block = list(buffers[s])[:EVENTS_PER_SEQUENCE]
+                    block = buffers.pop(s, [])
                     last_yielded_seq = s
 
-                    # optional: drop older seq buffers to keep memory small
+                    # keep memory small: drop old sequences
                     for k in list(buffers.keys()):
-                        if k <= last_yielded_seq - 3:  # keep a small tail
+                        if k <= last_yielded_seq - 3:
                             buffers.pop(k, None)
 
-                    yield block
+                    if block:
+                        yield block
                 else:
-                    page.wait_for_timeout(100)  # let events pump
+                    page.wait_for_timeout(100)
 
         finally:
             try:
