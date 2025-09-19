@@ -1,4 +1,4 @@
-﻿# bybit_replace_lows_15m_batch.py
+﻿# bybit_highs_lows_15m_batch.py
 import ccxt
 import json
 
@@ -26,8 +26,7 @@ def _fetch_ohlcv_range(ex, symbol, timeframe, start_ms, end_ms, limit=1000):
     step = _step_ms(timeframe)
     while since <= end_ms:
         batch = ex.fetch_ohlcv(symbol, timeframe=timeframe, since=since, limit=limit)
-        if not batch:
-            break
+        if not batch: break
         for c in batch:
             if c[0] > end_ms: break
             if c[0] >= start_ms: out.append(c)  # [ts, o, h, l, c, v]
@@ -51,43 +50,59 @@ def _low_for_ts(candles: list[list], ts_ms: int, step_ms: int) -> float:
 def aggr_bybit_minus_1h(ts_ms: int) -> int:
     return ts_ms + AGGR_BYBIT_HOUR_SHIFT_MS
 
-def replace_lows_with_bybit_aggr_bybit_1h(seq_list: list[dict], *, ticker: str = "BTC") -> list[dict]:
+def _h1_high_between(candles: list[list], start_ms: int, end_ms: int) -> tuple[float, int]:
+    w = [c for c in candles if start_ms <= c[0] <= end_ms]
+    if not w: raise RuntimeError("No candles in L1→L2 window")
+    hi = max(w, key=lambda r: r[2])
+    return float(hi[2]), int(hi[0])
+
+def _process_core(seq_list: list[dict], *, ticker: str = "BTC") -> list[dict]:
     ex = init_bybit_public()
     symbol = symbol_for(ticker)
     step = _step_ms(TF)
 
-    # unified fetch window (shifted)
-    all_ts_shifted = []
+    # unified fetch window across all shifted L1/L2
+    all_ts = []
     for s in seq_list:
-        all_ts_shifted.append(aggr_bybit_minus_1h(int(s["L1"]["time"]) * 1000))
-        all_ts_shifted.append(aggr_bybit_minus_1h(int(s["L2"]["time"]) * 1000))
-    start_ms = _bucket_open(min(all_ts_shifted), step) - step
-    end_ms   = _bucket_open(max(all_ts_shifted), step) + step
+        all_ts.append(aggr_bybit_minus_1h(int(s["L1"]["time"]) * 1000))
+        all_ts.append(aggr_bybit_minus_1h(int(s["L2"]["time"]) * 1000))
+    start_ms = _bucket_open(min(all_ts), step) - step
+    end_ms   = _bucket_open(max(all_ts), step) + step
+
     candles = _fetch_ohlcv_range(ex, symbol, TF, start_ms, end_ms, limit=1000)
 
     updated = []
     for s in seq_list:
-        l1_ts_ms_shifted = aggr_bybit_minus_1h(int(s["L1"]["time"]) * 1000)
-        l2_ts_ms_shifted = aggr_bybit_minus_1h(int(s["L2"]["time"]) * 1000)
+        l1_ts = aggr_bybit_minus_1h(int(s["L1"]["time"]) * 1000)
+        l2_ts = aggr_bybit_minus_1h(int(s["L2"]["time"]) * 1000)
         l1_old, l2_old = s["L1"]["price"], s["L2"]["price"]
-        l1_low = _low_for_ts(candles, l1_ts_ms_shifted, step)
-        l2_low = _low_for_ts(candles, l2_ts_ms_shifted, step)
+
+        # L1/L2 lows (Bybit 15m)
+        l1_low = _low_for_ts(candles, l1_ts, step)
+        l2_low = _low_for_ts(candles, l2_ts, step)
+
+        # H1 high between L1 and L2 (inclusive)
+        t_start, t_end = (l1_ts, l2_ts) if l1_ts <= l2_ts else (l2_ts, l1_ts)
+        h1_price, h1_ts = _h1_high_between(candles, t_start, t_end)
 
         s2 = {**s}
         s2["L1"] = {**s["L1"], "price": l1_low}
         s2["L2"] = {**s["L2"], "price": l2_low}
+        s2["H1"] = {"time": h1_ts // 1000, "price": h1_price}
         updated.append(s2)
 
-        print(f"{s.get('status','')} {s.get('side','')} | L1 {l1_old} → {l1_low}  |  L2 {l2_old} → {l2_low}")
+        print(f"{s.get('status','')} {s.get('side','')} | "
+              f"L1 {l1_old} → {l1_low} | L2 {l2_old} → {l2_low} | "
+              f"H1 {h1_price} @ {h1_ts}")
 
     return updated
 
-# --- Public entrypoint for external use ---
+# Public entrypoint
 def process(rawdata: list[dict], *, ticker: str = "BTC") -> list[dict]:
-    """Takes raw seq_list and returns the same list with L1/L2 prices replaced by Bybit 15m lows (-1h aggr→Bybit)."""
-    return replace_lows_with_bybit_aggr_bybit_1h(rawdata, ticker=ticker)
+    """Return seq_list with L1/L2 replaced by Bybit 15m lows (aggr→Bybit −1h) and H1 high inserted."""
+    return _process_core(rawdata, ticker=ticker)
 
-# --- Sample data outside __main__ so it can be imported for testing ---
+# Sample data (importable)
 SAMPLE_SEQ_LIST = [
   {
     "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "❔",
