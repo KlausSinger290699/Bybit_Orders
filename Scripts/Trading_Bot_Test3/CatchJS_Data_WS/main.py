@@ -2,6 +2,10 @@
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import bybit_preprocessor, sequence_order
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData import ws_emit_bridge
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.z_Helpers import printer
+import atexit
+
+ws_emit_bridge.start("ws://127.0.0.1:8765")
+atexit.register(ws_emit_bridge.stop)
 
 for raw_data in playwright_session.iter_blocks():   # ← stream forever
     ordered_raw_data = sequence_order.order_by_l1_time(raw_data)
