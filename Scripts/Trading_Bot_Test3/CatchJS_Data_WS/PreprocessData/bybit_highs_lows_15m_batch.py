@@ -1,5 +1,4 @@
-﻿# bybit_highs_lows_15m_batch.py
-import ccxt
+﻿import ccxt
 import json
 import time
 from threading import Thread, Event, Lock
@@ -57,14 +56,13 @@ def init_bybit_public() -> ccxt.bybit:
             ex = ccxt.bybit({"enableRateLimit": True})
             ex.options["defaultType"] = DEFAULT_TYPE
             print("Loading markets (Bybit | public)…")
-            with_spinner("Loading markets", ex.load_markets, done_message="Loading markets done. ✅\n")
+            with_spinner("Loading markets", ex.load_markets, done_message="Loading markets done. ✅")
             _EX_SINGLETON = ex
             _MARKETS_LOADED = True
         elif not _MARKETS_LOADED:
             print("Loading markets (Bybit | public)…")
             with_spinner("Loading markets", _EX_SINGLETON.load_markets, done_message="Loading markets done. ✅")
             _MARKETS_LOADED = True
-            print("Ready.\n")
         return _EX_SINGLETON
 
 # -------------------- candle utils --------------------
@@ -98,8 +96,7 @@ def _fetch_ohlcv_range(ex, symbol, timeframe, start_ms, end_ms, limit=1000, *, p
             since = nxt
             if len(batch) < limit:
                 break
-            # tiny pause to be nice to API; ccxt also rate-limits
-            time.sleep(0.01)
+            time.sleep(0.01)  # tiny pause; ccxt also rate-limits
         return out
 
     if progress:
@@ -156,7 +153,7 @@ def process(rawdata: list[dict], *, ticker: str = "BTC", progress: bool = False)
     Replace L1/L2 with Bybit 15m lows (−1h aggr→Bybit) and insert H1 high after L2.
     Set progress=True to show a fetching spinner (no 'done' message).
     """
-    ex = init_bybit_public()
+    ex = init_bybit_public()  # safe: singleton; prints only on first load
     symbol = symbol_for(ticker)
     step = _step_ms(TF)
 

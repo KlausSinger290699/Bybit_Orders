@@ -1,10 +1,7 @@
 ﻿from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.CatchData import playwright_session
-from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import bybit_preprocessor, sequence_order, bybit_highs_lows_15m_batch
+from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import bybit_preprocessor, sequence_order
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData import ws_emit_bridge
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.z_Helpers import printer
-
-# Load markets first (blocking) so the three lines print cleanly
-bybit_highs_lows_15m_batch.init_bybit_public()
 
 for raw_data in playwright_session.iter_blocks():   # ← stream forever
     ordered_raw_data = sequence_order.order_by_l1_time(raw_data)

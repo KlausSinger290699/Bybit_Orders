@@ -1,13 +1,16 @@
-﻿# CatchData/playwright_session.py
-from pathlib import Path
+﻿from pathlib import Path
 from collections import defaultdict
 from time import monotonic
 from playwright.sync_api import sync_playwright
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.z_Helpers import utils
+from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import bybit_highs_lows_15m_batch as bybit
 
 PROFILE_DIR = Path(r"C:\Users\Anwender\PlaywrightProfiles\aggr")
 URL = "https://charts.aggr.trade/koenzv4"
 PREFIX = "[AGGR INDICATOR]"
+
+# ensure we warm Bybit exactly once (shows spinner + 'done ✅')
+_BYBIT_WARMED = False
 
 def iter_blocks_latest(debounce_ms: int = 80):
     """
@@ -52,6 +55,13 @@ def iter_blocks_latest(debounce_ms: int = 80):
         try:
             page.goto(URL)
             print("🟢 Listening… prefix:", PREFIX)
+
+            # Load Bybit markets ONCE with spinner (right after the listening line)
+            global _BYBIT_WARMED
+            if not _BYBIT_WARMED:
+                bybit.init_bybit_public()
+                _BYBIT_WARMED = True
+
             page.evaluate(f"console.log('{PREFIX} __probe__ console-wired')")
 
             while True:
