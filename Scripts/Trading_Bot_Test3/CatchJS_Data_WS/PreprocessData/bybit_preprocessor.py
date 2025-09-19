@@ -16,7 +16,7 @@ def process(data: Any, *, ticker: str = "BTC"):
             print(f"[bybit_preprocessor] ERROR fallback passthrough: {e}")
             processed_list = data  # fall back to raw if enrichment fails
 
-        for p in processed_list: sequence_store.save_data_locally(p)
+        #for p in processed_list: sequence_store.save_data_locally(p)
         return processed_list
 
     # Single dict path: pass-through with no saving (avoids double writes).
