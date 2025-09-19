@@ -38,10 +38,10 @@
     <Compile Include="Scripts\Trading_Bot_Test2\Use_Data_WS\main.py" />
     <Compile Include="Scripts\Trading_Bot_Test2\Use_Data_WS\PreProcessData\is_tradable_data.py" />
     <Compile Include="Scripts\Trading_Bot_Test2\Use_Data_WS\PreProcessData\tradable_data_container.py" />
-    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\printer.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\z_Helpers\printer.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\Unused\bull_div_reader_sync.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\PreProcessData\strategy_engine.py" />
-    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\utils.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\z_Helpers\utils.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\main.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\PreprocessData\bybit_preprocessor.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\SendData\log_uniform.py" />
@@ -132,6 +132,7 @@
     <Content Include="Scripts\Trading_Bot_Test3\.gitkeep" />
     <Content Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\.gitkeep" />
     <Content Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\.gitkeep" />
+    <Content Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\z_Helpers\.gitkeep" />
     <Content Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\PreprocessData\.gitkeep" />
     <Content Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\SendData\.gitkeep" />
     <Content Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\Unused\.gitkeep" />
@@ -171,6 +172,7 @@
     <Folder Include="Scripts\Trading_Bot_Test3\" />
     <Folder Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\" />
     <Folder Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\CatchData\" />
+    <Folder Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\z_Helpers\" />
     <Folder Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\PreprocessData\" />
     <Folder Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\SendData\" />
     <Folder Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\Unused\" />

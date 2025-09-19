@@ -2,7 +2,7 @@
 from pathlib import Path
 from collections import defaultdict, deque
 from playwright.sync_api import sync_playwright
-from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.CatchData import utils
+from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.z_Helpers import utils
 
 PROFILE_DIR = Path(r"C:\Users\Anwender\PlaywrightProfiles\aggr")
 URL = "https://charts.aggr.trade/koenzv4"
