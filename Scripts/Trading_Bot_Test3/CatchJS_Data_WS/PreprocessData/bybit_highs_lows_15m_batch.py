@@ -26,14 +26,19 @@ def _fetch_ohlcv_range(ex, symbol, timeframe, start_ms, end_ms, limit=1000):
     step = _step_ms(timeframe)
     while since <= end_ms:
         batch = ex.fetch_ohlcv(symbol, timeframe=timeframe, since=since, limit=limit)
-        if not batch: break
+        if not batch:
+            break
         for c in batch:
-            if c[0] > end_ms: break
-            if c[0] >= start_ms: out.append(c)  # [ts, o, h, l, c, v]
+            if c[0] > end_ms:
+                break
+            if c[0] >= start_ms:
+                out.append(c)  # [ts, o, h, l, c, v]
         nxt = batch[-1][0] + step
-        if nxt <= since: break
+        if nxt <= since:
+            break
         since = nxt
-        if len(batch) < limit: break
+        if len(batch) < limit:
+            break
     return out
 
 def _bucket_open(ts_ms: int, step_ms: int) -> int:
@@ -42,14 +47,17 @@ def _bucket_open(ts_ms: int, step_ms: int) -> int:
 def _low_for_ts(candles: list[list], ts_ms: int, step_ms: int) -> float:
     bo = _bucket_open(ts_ms, step_ms)
     for o, _o, _h, l, _c, _v in candles:
-        if o == bo: return float(l)
+        if o == bo:
+            return float(l)
     for o, _o, _h, l, _c, _v in candles:
-        if o <= ts_ms < o + step_ms: return float(l)
+        if o <= ts_ms < o + step_ms:
+            return float(l)
     raise RuntimeError(f"15m candle not found for ts={ts_ms}")
 
 def _h1_high_between(candles: list[list], start_ms: int, end_ms: int) -> tuple[float, int]:
     w = [c for c in candles if start_ms <= c[0] <= end_ms]
-    if not w: raise RuntimeError("No candles in L1→L2 window")
+    if not w:
+        raise RuntimeError("No candles in L1→L2 window")
     hi = max(w, key=lambda r: r[2])
     return float(hi[2]), int(hi[0])
 
@@ -70,7 +78,6 @@ def _with_h1_after_l2(s: dict, *, l1_low: float, l2_low: float, h1_price: float,
             continue
         else:
             out[k] = s[k]
-    # if L1/L2 weren’t present for some reason, append them (and H1) at the end
     if "L1" not in out:
         out["L1"] = {**s.get("L1", {}), "price": l1_low}
     if "L2" not in out:
@@ -97,7 +104,6 @@ def process(rawdata: list[dict], *, ticker: str = "BTC") -> list[dict]:
     for s in rawdata:
         l1_ts = aggr_bybit_minus_1h(int(s["L1"]["time"]) * 1000)
         l2_ts = aggr_bybit_minus_1h(int(s["L2"]["time"]) * 1000)
-        l1_old, l2_old = s["L1"]["price"], s["L2"]["price"]
 
         l1_low = _low_for_ts(candles, l1_ts, step)
         l2_low = _low_for_ts(candles, l2_ts, step)
@@ -106,10 +112,6 @@ def process(rawdata: list[dict], *, ticker: str = "BTC") -> list[dict]:
 
         s2 = _with_h1_after_l2(s, l1_low=l1_low, l2_low=l2_low, h1_price=h1_price, h1_ts_ms=h1_ts)
         updated.append(s2)
-
-        print(f"{s.get('status','')} {s.get('side','')} | "
-              f"L1 {l1_old} → {l1_low} | L2 {l2_old} → {l2_low} | "
-              f"H1 {h1_price} @ {h1_ts}")
 
     return updated
 
@@ -149,6 +151,20 @@ SAMPLE_SEQ_LIST = [
   }
 ]
 
+def print_new_lows_and_highs(SAMPLE_SEQ_LIST, updated):
+    # Pretty console preview (sample-only): show original → updated + H1
+    for orig, new in zip(SAMPLE_SEQ_LIST, updated):
+        l1_old = orig["L1"]["price"]
+        l2_old = orig["L2"]["price"]
+        l1_new = new["L1"]["price"]
+        l2_new = new["L2"]["price"]
+        h1_p   = new["H1"]["price"]
+        h1_ts  = new["H1"]["time"] * 1000  # match earlier ms style in logs
+        print(f"{new.get('status','')} {new.get('side','')} | "
+              f"L1 {l1_old} → {l1_new} | L2 {l2_old} → {l2_new} | "
+              f"H1 {h1_p} @ {h1_ts}")
+
 if __name__ == "__main__":
     updated = process(SAMPLE_SEQ_LIST, ticker="BTC")
-    print(json.dumps(updated, ensure_ascii=False, indent=2))
+    print_new_lows_and_highs(SAMPLE_SEQ_LIST, updated)
+    print("\n" + json.dumps(updated, ensure_ascii=False, indent=2)) # Full JSON for inspection
