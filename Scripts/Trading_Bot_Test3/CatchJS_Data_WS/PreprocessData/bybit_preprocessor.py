@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import sequence_store
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import bybit_highs_lows_15m_batch as highs_lows
 
-def process(data: Any, *, ticker: str = "BTC"):
+def process(data: Any, ticker: str = "BTC", stored_data: bool = False):
     """
     If list[dict] -> compute Bybit 15m L1/L2 lows (−1h) + H1 highs and return list.
                      Persist each processed element exactly once.
@@ -16,8 +16,10 @@ def process(data: Any, *, ticker: str = "BTC"):
             print(f"[bybit_preprocessor] ERROR fallback passthrough: {e}")
             processed_list = data  # fall back to raw if enrichment fails
 
-        #for p in processed_list: sequence_store.save_data_locally(p)
+        if stored_data:
+            for p in processed_list:
+                sequence_store.save_data_locally(p)
+
         return processed_list
 
-    # Single dict path: pass-through with no saving (avoids double writes).
     return dict(data)
