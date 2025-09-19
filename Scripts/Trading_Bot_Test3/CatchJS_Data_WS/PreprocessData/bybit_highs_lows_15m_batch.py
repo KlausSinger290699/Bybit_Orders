@@ -24,11 +24,6 @@ def _clear_line():
     print("\r" + " " * 120 + "\r", end="", flush=True)
 
 def with_spinner(label: str, fn, *args, done_message: str | None = None, **kwargs):
-    """
-    Run fn(*args, **kwargs) while showing a spinner with `label`.
-    If done_message is provided, print it on completion.
-    If done_message is None, clear the spinner line (no '... done.').
-    """
     stop = Event()
     t = Thread(target=_spinner, args=(label, stop), daemon=True)
     t.start()
@@ -38,7 +33,9 @@ def with_spinner(label: str, fn, *args, done_message: str | None = None, **kwarg
         stop.set()
         t.join()
         if done_message is not None:
-            print(done_message)
+            # wipe spinner line, then print the final message on a fresh line
+            print("\r" + " " * 120, end="\r", flush=True)
+            print(done_message, flush=True)
         else:
             _clear_line()
 
@@ -60,13 +57,12 @@ def init_bybit_public() -> ccxt.bybit:
             ex = ccxt.bybit({"enableRateLimit": True})
             ex.options["defaultType"] = DEFAULT_TYPE
             print("Loading markets (Bybit | public)…")
-            with_spinner("Loading markets", ex.load_markets, done_message="Loading markets done.")
+            with_spinner("Loading markets", ex.load_markets, done_message="Loading markets done. ✅\n")
             _EX_SINGLETON = ex
             _MARKETS_LOADED = True
-            print("Ready.\n")
         elif not _MARKETS_LOADED:
             print("Loading markets (Bybit | public)…")
-            with_spinner("Loading markets", _EX_SINGLETON.load_markets, done_message="Loading markets done.")
+            with_spinner("Loading markets", _EX_SINGLETON.load_markets, done_message="Loading markets done. ✅")
             _MARKETS_LOADED = True
             print("Ready.\n")
         return _EX_SINGLETON
