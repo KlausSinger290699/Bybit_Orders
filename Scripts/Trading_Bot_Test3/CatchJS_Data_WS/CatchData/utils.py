@@ -61,8 +61,12 @@ def choose_tf_label(batch: list[dict]) -> str:
         if sec: return fmt_tf(sec)
     return "?"
 
-def seq_bars(seq_no: int, tf_label: str):
-    title = f"📌 {to_bold_unicode('Sequence')} \uFF03{to_bold_unicode(str(seq_no))} — {to_bold_unicode(tf_label)} "
+def seq_bars(seq_no: int, tf_label: str, tag: str | None = None):
+    title = f"📌 {to_bold_unicode('Sequence')} \uFF03{to_bold_unicode(str(seq_no))} — {to_bold_unicode(tf_label)}"
+    if tag:
+        title += f" ({tag}) "
+    else:
+        title += " "
     inner_base = "━━ " + title
     pad = max(0, SEQ_TARGET_INNER - len(inner_base))
     inner = inner_base + ("━" * pad)

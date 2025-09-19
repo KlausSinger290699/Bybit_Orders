@@ -3,7 +3,7 @@ from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.PreprocessData import bybit_prepr
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData import ws_emit_bridge
 
 for rawdata in playwright_session.iter_blocks():   # ← stream forever
-    printer.print_sequence(rawdata)
+    printer.print_sequence(rawdata, tag="Aggr")
     processeddata = bybit_preprocessor.process(rawdata)
-    printer.print_sequence(processeddata)
+    printer.print_sequence(processeddata, tag = "Bybit")
     ws_emit_bridge.send(processeddata)
