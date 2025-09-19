@@ -1,6 +1,7 @@
 ﻿# bybit_highs_lows_15m_batch.py
 # Replace L1/L2 with Bybit 15m lows (−1h aggr→Bybit) and insert H1 high after L2.
 # Reuses fully-enriched results when thread_id or pair_id matches a prior entry.
+# Includes lightweight cache metrics + optional debug logs.
 
 from __future__ import annotations
 
@@ -17,6 +18,31 @@ QUOTE = "USDT"
 CONTRACT_SUFFIX = ":USDT"
 TF = "15m"
 AGGR_BYBIT_HOUR_SHIFT_MS = -3_600_000  # -1h
+
+# -------------------- debug & metrics --------------------
+DEBUG = False
+_METRICS = {
+    "cache_puts": 0,
+    "cache_hit_thread": 0,
+    "cache_hit_pair": 0,
+    "reused_items": 0,
+    "computed_items": 0,
+    "fetch_calls": 0,  # how many OHLCV-range fetches we performed
+}
+
+def enable_cache_debug(flag: bool = True):
+    """Turn on/off verbose cache/reuse logs."""
+    global DEBUG
+    DEBUG = bool(flag)
+
+def cache_stats() -> dict:
+    """Return a shallow copy of current metrics."""
+    return dict(_METRICS)
+
+def reset_cache_stats():
+    """Reset metrics counters."""
+    for k in _METRICS:
+        _METRICS[k] = 0
 
 # -------------------- spinner helpers --------------------
 def _spinner(label: str, stop: Event, interval: float = 0.1):
@@ -84,6 +110,7 @@ def _fetch_ohlcv_range(ex, symbol, timeframe, start_ms, end_ms, limit=1000, *, p
       and clear the line on completion (NO '... done.' message).
     - If progress=False, run silently.
     """
+    _METRICS["fetch_calls"] += 1  # count per consolidated fetch
     label = f"Fetching {timeframe} OHLCV for {symbol}"
 
     def _do_fetch():
@@ -169,12 +196,29 @@ class PivotCache:
             self._by_thread[tid] = item
         if pid:
             self._by_pair[pid] = item
+        _METRICS["cache_puts"] += 1
+        if DEBUG:
+            print(f"[cache] put tid={tid} pid={pid}")
 
     def get_by_thread(self, thread_id: Optional[str]) -> Optional[Dict[str, Any]]:
-        return self._by_thread.get(thread_id) if thread_id else None
+        if not thread_id:
+            return None
+        hit = self._by_thread.get(thread_id)
+        if hit is not None:
+            _METRICS["cache_hit_thread"] += 1
+            if DEBUG:
+                print(f"[cache] HIT(thread) {thread_id}")
+        return hit
 
     def get_by_pair(self, pair_id: Optional[str]) -> Optional[Dict[str, Any]]:
-        return self._by_pair.get(pair_id) if pair_id else None
+        if not pair_id:
+            return None
+        hit = self._by_pair.get(pair_id)
+        if hit is not None:
+            _METRICS["cache_hit_pair"] += 1
+            if DEBUG:
+                print(f"[cache] HIT(pair) {pair_id}")
+        return hit
 
 _CACHE = PivotCache()
 
@@ -211,6 +255,9 @@ def plan_reuse(items: List[Dict[str, Any]], cache: PivotCache
                 "L2": {**s.get("L2", {}), "price": prev["L2"]["price"]},
                 "H1": {"time": prev["H1"]["time"], "price": prev["H1"]["price"]},
             })
+            _METRICS["reused_items"] += 1
+            if DEBUG:
+                print(f"[reuse] {s.get('thread_id')} | {s.get('pair_id')}")
         else:
             to_compute.append(s)
 
@@ -271,6 +318,8 @@ def process(rawdata: List[Dict[str, Any]], *, ticker: str = "BTC", progress: boo
         computed.append(s2)
         cache.put(s2)  # update cache with fully enriched entry
 
+    _METRICS["computed_items"] += len(computed)
+
     # 4) merge in original order (computed overrides reused when both exist)
     def _fid(x: Dict[str, Any]) -> Tuple[str, str]:
         return (x.get("thread_id", ""), x.get("pair_id", ""))
@@ -290,38 +339,93 @@ def process(rawdata: List[Dict[str, Any]], *, ticker: str = "BTC", progress: boo
     return out
 
 # -------------------- standalone sample --------------------
-SAMPLE_SEQ_LIST = [
+SEQ_1 = [
+  {
+    "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "✅",
+    "thread_id": "bull:113420.64-114398.93:900", "pair_id": "L1:113420.64|L2:114398.93", "sequence": 1,
+    "L1": {"time": 1757597400, "price": 113242.0},
+    "L2": {"time": 1757952900, "price": 114340.0},
+    "H1": {"time": 1757916000, "price": 116761.3},
+    "cvd": {"L1": -910772639, "L2": -931816191},
+    "meta": {"start": 1757952900, "end": 1757597400, "sIndex": 384, "eIndex": 779}
+  },
+  {
+    "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "✅",
+    "thread_id": "bull:114385.49-114710.52:900", "pair_id": "L1:114385.49|L2:114710.52", "sequence": 1,
+    "L1": {"time": 1757946600, "price": 114316.3},
+    "L2": {"time": 1758138300, "price": 114710.0},
+    "H1": {"time": 1758093300, "price": 117239.5},
+    "cvd": {"L1": -943267646, "L2": -957691958},
+    "meta": {"start": 1758138300, "end": 1757946600, "sIndex": 178, "eIndex": 391}
+  },
   {
     "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "❔",
-    "thread_id": "bull:1758138300-1758240000:900", "pair_id": "L1:1758138300|L2:1758240000", "sequence": 1,
-    "L1": {"time": 1758138300, "price": 114710.5181818182},
-    "L2": {"time": 1758240000, "price": 116631.62727272726},
-    "cvd": {"L1": 597589528.6265794, "L2": -278522994.0802517},
-    "meta": {"start": 1758240000, "end": 1758138300, "sIndex": 1, "eIndex": 114}
+    "thread_id": "bull:114710.52-115466.41:900", "pair_id": "L1:114710.52|L2:115466.41", "sequence": 1,
+    "L1": {"time": 1758138300, "price": 114710.0},
+    "L2": {"time": 1758297600, "price": 115408.0},
+    "H1": {"time": 1758219300, "price": 117884.0},
+    "cvd": {"L1": -19924566680.51148, "L2": -21455611296.996433},
+    "meta": {"start": 1758297600, "end": 1758138300, "sIndex": 1, "eIndex": 178}
+  }
+]
+
+SEQ_2 = [
+  {
+    "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "✅",
+    "thread_id": "bull:113420.64-114398.93:900", "pair_id": "L1:113420.64|L2:114398.93", "sequence": 2,
+    "L1": {"time": 1757597400, "price": 113242.0},
+    "L2": {"time": 1757952900, "price": 114340.0},
+    "H1": {"time": 1757916000, "price": 116761.3},
+    "cvd": {"L1": -910772639, "L2": -931816191},
+    "meta": {"start": 1757952900, "end": 1757597400, "sIndex": 384, "eIndex": 779}
   },
   {
     "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "✅",
-    "thread_id": "bull:1757946600-1758138300:900", "pair_id": "L1:1757946600|L2:1758138300", "sequence": 1,
-    "L1": {"time": 1757946600, "price": 114385.49090909092},
-    "L2": {"time": 1758138300, "price": 114710.5181818182},
-    "cvd": {"L1": -110010445, "L2": -124434757},
-    "meta": {"start": 1758138300, "end": 1757946600, "sIndex": 114, "eIndex": 327}
+    "thread_id": "bull:114385.49-114710.52:900", "pair_id": "L1:114385.49|L2:114710.52", "sequence": 2,
+    "L1": {"time": 1757946600, "price": 114316.3},
+    "L2": {"time": 1758138300, "price": 114710.0},
+    "H1": {"time": 1758093300, "price": 117239.5},
+    "cvd": {"L1": -943267646, "L2": -957691958},
+    "meta": {"start": 1758138300, "end": 1757946600, "sIndex": 178, "eIndex": 391}
+  },
+  {
+    "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "❔",
+    "thread_id": "bull:114710.52-115466.41:900", "pair_id": "L1:114710.52|L2:115466.41", "sequence": 2,
+    "L1": {"time": 1758138300, "price": 114710.0},
+    "L2": {"time": 1758297600, "price": 115408.0},
+    "H1": {"time": 1758219300, "price": 117884.0},
+    "cvd": {"L1": -19924566680.51148, "L2": -21455611296.996433},
+    "meta": {"start": 1758297600, "end": 1758138300, "sIndex": 1, "eIndex": 178}
+  }
+]
+
+SEQ_3 = [
+  {
+    "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "✅",
+    "thread_id": "bull:113420.64-114398.93:900", "pair_id": "L1:113420.64|L2:114398.93", "sequence": 3,
+    "L1": {"time": 1757597400, "price": 113242.0},
+    "L2": {"time": 1757952900, "price": 114340.0},
+    "H1": {"time": 1757916000, "price": 116761.3},
+    "cvd": {"L1": -910772639, "L2": -931816191},
+    "meta": {"start": 1757952900, "end": 1757597400, "sIndex": 384, "eIndex": 779}
   },
   {
     "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "✅",
-    "thread_id": "bull:1757597400-1757952900:900", "pair_id": "L1:1757597400|L2:1757952900", "sequence": 1,
-    "L1": {"time": 1757597400, "price": 113420.63636363637},
-    "L2": {"time": 1757952900, "price": 114398.92727272726},
-    "cvd": {"L1": -77515438, "L2": -98558990},
-    "meta": {"start": 1757952900, "end": 1757597400, "sIndex": 320, "eIndex": 715}
+    "thread_id": "bull:114385.49-114710.52:900", "pair_id": "L1:114385.49|L2:114710.52", "sequence": 3,
+    "L1": {"time": 1757946600, "price": 114316.3},
+    "L2": {"time": 1758138300, "price": 114710.0},
+    "H1": {"time": 1758093300, "price": 117239.5},
+    "cvd": {"L1": -943267646, "L2": -957691958},
+    "meta": {"start": 1758138300, "end": 1757946600, "sIndex": 178, "eIndex": 391}
   },
   {
-    "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "✅",
-    "thread_id": "bull:1757554200-1757587500:900", "pair_id": "L1:1757554200|L2:1757587500", "sequence": 1,
-    "L1": {"time": 1757554200, "price": 113657.63636363637},
-    "L2": {"time": 1757587500, "price": 113778.15454545454},
-    "cvd": {"L1": -293465982.92287177, "L2": -581573096.8806956},
-    "meta": {"start": 1757587500, "end": 1757554200, "sIndex": 726, "eIndex": 763}
+    "v": 1, "source": "aggr/indicator", "tf_sec": 900, "side": "bull", "status": "❔",
+    "thread_id": "bull:114710.52-115466.41:900", "pair_id": "L1:114710.52|L2:115466.41", "sequence": 3,
+    "L1": {"time": 1758138300, "price": 114710.0},
+    "L2": {"time": 1758297600, "price": 115408.0},
+    "H1": {"time": 1758219300, "price": 117884.0},
+    "cvd": {"L1": -19924566680.51148, "L2": -21455611296.996433},
+    "meta": {"start": 1758297600, "end": 1758138300, "sIndex": 1, "eIndex": 178}
   }
 ]
 
@@ -338,7 +442,27 @@ def _print_preview(sample_seq_list, updated):
               f"H1 {h1_p} @ {h1_ts}")
 
 if __name__ == "__main__":
-    if SAMPLE_SEQ_LIST:
-        updated = process(SAMPLE_SEQ_LIST, ticker="BTC", progress=True)
-        _print_preview(SAMPLE_SEQ_LIST, updated)
-        print("\n" + json.dumps(updated, ensure_ascii=False, indent=2))
+    enable_cache_debug(False)
+
+    # Warm-up markets so logs are tidy
+    init_bybit_public()
+    reset_cache_stats()
+
+    print("\n=== Run A: SEQ_1 (compute expected) ===")
+    out1 = process(SEQ_1, ticker="BTC", progress=True)
+    _print_preview(SEQ_1, out1)
+    print("Stats after Run A:", cache_stats())
+
+    print("\n=== Run B: SEQ_2 (reuse expected by thread_id/pair_id) ===")
+    out2 = process(SEQ_2, ticker="BTC", progress=False)
+    _print_preview(SEQ_2, out2)
+    print("Stats after Run B:", cache_stats())
+
+    print("\n=== Run C: SEQ_3 (reuse expected again) ===")
+    out3 = process(SEQ_3, ticker="BTC", progress=False)
+    _print_preview(SEQ_3, out3)
+    print("Stats after Run C:", cache_stats())
+
+    print("\nExpectations:")
+    print(f"- Run A: computed_items increases by {len(SEQ_1)}, fetch_calls = 1")
+    print("- Run B & C: reused_items increases by ~len(batch) each, fetch_calls should not increase")
