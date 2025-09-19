@@ -1,4 +1,5 @@
-﻿from pathlib import Path
+﻿# CatchData/playwright_session.py
+from pathlib import Path
 from collections import defaultdict
 from time import monotonic
 from playwright.sync_api import sync_playwright
@@ -9,8 +10,21 @@ PROFILE_DIR = Path(r"C:\Users\Anwender\PlaywrightProfiles\aggr")
 URL = "https://charts.aggr.trade/koenzv4"
 PREFIX = "[AGGR INDICATOR]"
 
-# ensure we warm Bybit exactly once (shows spinner + 'done ✅')
+# internal flag so we warm Bybit exactly once
 _BYBIT_WARMED = False
+
+
+def load_bybit_markets_once() -> None:
+    """
+    Load Bybit markets exactly once for this process.
+    Prints the spinner & 'Loading markets done. ✅' lines from bybit.init_bybit_public().
+    """
+    global _BYBIT_WARMED
+    if _BYBIT_WARMED:
+        return
+    bybit.init_bybit_public()
+    _BYBIT_WARMED = True
+
 
 def iter_blocks_latest(debounce_ms: int = 80):
     """
@@ -56,11 +70,8 @@ def iter_blocks_latest(debounce_ms: int = 80):
             page.goto(URL)
             print("🟢 Listening… prefix:", PREFIX)
 
-            # Load Bybit markets ONCE with spinner (right after the listening line)
-            global _BYBIT_WARMED
-            if not _BYBIT_WARMED:
-                bybit.init_bybit_public()
-                _BYBIT_WARMED = True
+            # Warm Bybit *once* (shows spinner + 'done ✅')
+            load_bybit_markets_once()
 
             page.evaluate(f"console.log('{PREFIX} __probe__ console-wired')")
 
