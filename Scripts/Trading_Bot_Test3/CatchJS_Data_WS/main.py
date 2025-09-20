@@ -10,7 +10,7 @@ atexit.register(ws_emit_bridge.stop)
 
 for raw_data in playwright_session.iter_blocks():
     ordered_raw_data = sequence_order.order_by_l1_time(raw_data)
-    printer.print_sequence(ordered_raw_data, tag="Aggr")
+    printer.print_sequence(ordered_raw_data)
     processed_data = bybit_preprocessor.process(ordered_raw_data)
-    printer.print_sequence(processed_data, tag="Bybit")
+    printer.print_sequence(processed_data)
     ws_emit_bridge.send(processed_data)          # broadcast to all connected clients
