@@ -10,20 +10,18 @@ from websockets import ConnectionClosedOK, ConnectionClosedError
 
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData.log_uniform import UniformLogger
 
-log = UniformLogger("WS-EMIT", show_wire=False, show_raw=False)  # flip True for verbose
+log = UniformLogger("WS-EMIT")  # leave default: it prints JSON payloads
 
-# Keep client tolerant to big payloads; keep ping intervals symmetric with server.
-CONNECT_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1, max_size=None)
+CONNECT_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
 
-# Globals for the background thread+loop
 _URI: Optional[str] = None
 _loop: Optional[asyncio.AbstractEventLoop] = None
 _thread: Optional[threading.Thread] = None
 _queue: Optional[asyncio.Queue] = None
 _stop_evt = threading.Event()
 
-_is_connected = False       # gate enqueuing while offline
-_wait_logged = False        # print "Waiting ..." once per offline stretch
+_is_connected = False
+_wait_logged = False
 
 
 async def _sender(ws, queue: asyncio.Queue):
@@ -38,7 +36,7 @@ async def _sender(ws, queue: asyncio.Queue):
             try:
                 wire = json.dumps(elem)
                 await ws.send(wire)
-                log.sent_wire(wire)
+                log.sent_wire(wire)   # 👈 back to JSON dump style
             except (ConnectionClosedOK, ConnectionClosedError, OSError, ConnectionResetError) as e:
                 code = getattr(e, 'code', '?')
                 reason = getattr(e, 'reason', str(e))
@@ -65,17 +63,15 @@ async def _receiver(ws):
 
 
 async def _session(uri: str):
-    """One connect→serve→disconnect cycle. Never re-raise task exceptions."""
     global _is_connected, _queue, _wait_logged
 
     async with websockets.connect(uri, **CONNECT_KW) as ws:
         _is_connected = True
-        _wait_logged = False  # allow "Waiting ..." on next offline stretch
+        _wait_logged = False
         log.connected()
         log.ready()
 
-        # Bounded queue to prevent RAM blow-ups under slow receivers.
-        q = asyncio.Queue(maxsize=1000)
+        q = asyncio.Queue()
         _queue = q
 
         send_task = asyncio.create_task(_sender(ws, q))
@@ -89,7 +85,6 @@ async def _session(uri: str):
                     with suppress(asyncio.CancelledError):
                         await t
 
-            # Drop backlog so we don't dump on reconnect
             _queue = None
             try:
                 while not q.empty():
@@ -111,15 +106,12 @@ async def _run(uri: str):
 
         try:
             await _session(uri)
-            # disconnects are already logged by sender/receiver
         except Exception:
-            # silence reconnect failures (e.g., WinError 1225) to avoid extra lines
             pass
 
         await asyncio.sleep(backoff)
         backoff = min(backoff * 2, 10)
 
-    # graceful shutdown
     if _queue is not None:
         try:
             await _queue.put(None)
@@ -128,7 +120,6 @@ async def _run(uri: str):
 
 
 def start(uri: str):
-    """Start the background emitter thread (idempotent)."""
     global _URI, _loop, _thread
     if _thread and _thread.is_alive():
         return
@@ -150,31 +141,13 @@ def start(uri: str):
 
 
 def send(payload):
-    """
-    Enqueue payload (dict OR list). Dropped if not connected or queue full.
-    - If queue is full, we drop the newest payload to keep latency low.
-      (Alternative: drop oldest by queue.get_nowait() before put_nowait)
-    """
+    """Enqueue payload (dict OR list). Dropped if not connected."""
     if not _is_connected or _loop is None or _queue is None:
         return
-
-    def _try_put():
-        try:
-            _queue.put_nowait(payload)
-        except asyncio.QueueFull:
-            # Drop newest (fast-path). To drop oldest instead, uncomment next two lines:
-            # with suppress(asyncio.QueueEmpty):
-            #     _queue.get_nowait()
-            # and then retry:
-            # with suppress(asyncio.QueueFull):
-            #     _queue.put_nowait(payload)
-            pass
-
-    _loop.call_soon_threadsafe(_try_put)
+    _loop.call_soon_threadsafe(_queue.put_nowait, payload)
 
 
 def stop():
-    """Stop the background emitter thread gracefully (idempotent)."""
     global _thread
     if not _thread:
         return
