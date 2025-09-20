@@ -7,12 +7,15 @@ from typing import Optional
 
 import websockets
 from websockets import ConnectionClosedOK, ConnectionClosedError
+
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData.log_uniform import UniformLogger
 
-log = UniformLogger("WS-EMIT")
+log = UniformLogger("WS-EMIT", show_wire=False, show_raw=False)  # flip True for verbose
 
-CONNECT_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
+# Keep client tolerant to big payloads; keep ping intervals symmetric with server.
+CONNECT_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1, max_size=None)
 
+# Globals for the background thread+loop
 _URI: Optional[str] = None
 _loop: Optional[asyncio.AbstractEventLoop] = None
 _thread: Optional[threading.Thread] = None
@@ -27,7 +30,7 @@ async def _sender(ws, queue: asyncio.Queue):
     """Send loop. On any send error, exit to trigger reconnect."""
     while not _stop_evt.is_set():
         item = await queue.get()
-        if item is None or item is _stop_evt:
+        if item is None:
             break
 
         items = item if isinstance(item, list) else [item]
@@ -71,7 +74,8 @@ async def _session(uri: str):
         log.connected()
         log.ready()
 
-        q = asyncio.Queue()
+        # Bounded queue to prevent RAM blow-ups under slow receivers.
+        q = asyncio.Queue(maxsize=1000)
         _queue = q
 
         send_task = asyncio.create_task(_sender(ws, q))
@@ -85,7 +89,7 @@ async def _session(uri: str):
                     with suppress(asyncio.CancelledError):
                         await t
 
-            # drop backlog so we don't dump on reconnect
+            # Drop backlog so we don't dump on reconnect
             _queue = None
             try:
                 while not q.empty():
@@ -124,6 +128,7 @@ async def _run(uri: str):
 
 
 def start(uri: str):
+    """Start the background emitter thread (idempotent)."""
     global _URI, _loop, _thread
     if _thread and _thread.is_alive():
         return
@@ -145,13 +150,31 @@ def start(uri: str):
 
 
 def send(payload):
-    """Enqueue payload (dict OR list). Dropped if not connected."""
+    """
+    Enqueue payload (dict OR list). Dropped if not connected or queue full.
+    - If queue is full, we drop the newest payload to keep latency low.
+      (Alternative: drop oldest by queue.get_nowait() before put_nowait)
+    """
     if not _is_connected or _loop is None or _queue is None:
         return
-    _loop.call_soon_threadsafe(_queue.put_nowait, payload)
+
+    def _try_put():
+        try:
+            _queue.put_nowait(payload)
+        except asyncio.QueueFull:
+            # Drop newest (fast-path). To drop oldest instead, uncomment next two lines:
+            # with suppress(asyncio.QueueEmpty):
+            #     _queue.get_nowait()
+            # and then retry:
+            # with suppress(asyncio.QueueFull):
+            #     _queue.put_nowait(payload)
+            pass
+
+    _loop.call_soon_threadsafe(_try_put)
 
 
 def stop():
+    """Stop the background emitter thread gracefully (idempotent)."""
     global _thread
     if not _thread:
         return
