@@ -3,7 +3,8 @@ import json
 import threading
 import asyncio
 from contextlib import suppress
-from typing import Optional, Set
+from typing import Optional, Set, Dict
+from itertools import count
 
 import websockets
 from websockets import WebSocketServerProtocol
@@ -17,6 +18,9 @@ _thread: Optional[threading.Thread] = None
 _stop_evt = threading.Event()
 
 _clients: Set[WebSocketServerProtocol] = set()
+_client_ids: Dict[WebSocketServerProtocol, str] = {}
+_id_counter = count(1)
+
 _queue: Optional[asyncio.Queue] = None
 
 _HOST = "127.0.0.1"
@@ -25,13 +29,19 @@ SERVE_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1, max_size=Non
 
 # Logging toggle
 _LOGS_ENABLED = True
-
-
 def _log(method: str, *args):
-    """Call a logger method only if logs are enabled."""
     if _LOGS_ENABLED:
         getattr(log, method)(*args)
 
+def _print(text: str):
+    if _LOGS_ENABLED:
+        print(text)
+
+def _peer(ws: WebSocketServerProtocol) -> str:
+    ra = getattr(ws, "remote_address", None)
+    if isinstance(ra, (tuple, list)) and len(ra) >= 2:
+        return f"{ra[0]}:{ra[1]}"
+    return str(ra or "<unknown>")
 
 # === Internals ============================================================
 async def _broadcast_worker():
@@ -45,7 +55,7 @@ async def _broadcast_worker():
         items = item if isinstance(item, list) else [item]
         for elem in items:
             wire = json.dumps(elem)
-            _log("sent_wire", wire)  # ugly full JSON, like before
+            _log("sent_wire", wire)  # 📤 [WS-HUB] Sent (json)   : {...}
 
             dead = []
             for ws in list(_clients):
@@ -55,23 +65,27 @@ async def _broadcast_worker():
                     dead.append(ws)
             for ws in dead:
                 _clients.discard(ws)
-
+                _client_ids.pop(ws, None)
 
 async def _handler(ws: WebSocketServerProtocol):
-    """Accept connections. Ignore inbound messages (pure broadcast hub)."""
+    """Accept connections; read ACKs so we can log them with client IDs."""
+    cid = f"C{next(_id_counter)}"
     _clients.add(ws)
+    _client_ids[ws] = cid
+
     _log("connected")
     _log("ready")
+    _print(f"🔗 [{log.role}] Client id={cid} peer={_peer(ws)}")
+
     try:
-        async for _ in ws:
-            # Ignore any inbound chatter from clients
-            pass
+        async for msg in ws:  # receivers send ACKs; include id in log line
+            _log("got_reply", f"[{cid}] {msg}")
     except Exception as e:
-        _log("disconnected", "?", str(e))
+        _log("disconnected", "?", f"{e} (id={cid}, peer={_peer(ws)})")
     finally:
         _clients.discard(ws)
+        _client_ids.pop(ws, None)
         _log("waiting")
-
 
 async def _run_server():
     global _queue
@@ -88,12 +102,9 @@ async def _run_server():
                 with suppress(asyncio.CancelledError):
                     await broadcaster
 
-
 # === Public API ==========================================================
 def start_server(host: str = "127.0.0.1", port: int = 8765, *, logs: bool = True):
-    """Start the hub server (idempotent).
-    Pass logs=False to silence all console output from this module.
-    """
+    """Start the hub server (idempotent). Pass logs=False to silence all output."""
     global _HOST, _PORT, _thread, _loop, _LOGS_ENABLED
     if _thread and _thread.is_alive():
         return
@@ -114,21 +125,16 @@ def start_server(host: str = "127.0.0.1", port: int = 8765, *, logs: bool = True
     _thread = threading.Thread(target=_thread_target, name="ws-hub", daemon=True)
     _thread.start()
 
-
 def send(payload):
     """Enqueue payload (dict OR list) for broadcast to all connected clients."""
     if _loop is None or _queue is None:
         return
-
     def _try_put():
         try:
             _queue.put_nowait(payload)
         except asyncio.QueueFull:
-            # drop newest
-            pass
-
+            pass  # drop newest
     _loop.call_soon_threadsafe(_try_put)
-
 
 def stop():
     """Stop the hub server."""
