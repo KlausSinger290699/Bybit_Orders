@@ -1,129 +1,91 @@
-﻿# ws_emit_bridge.py
+﻿# ws_emit_bridge.py  — HUB (server) that broadcasts payloads to all connected clients
 import json
 import threading
 import asyncio
 from contextlib import suppress
-from typing import Optional
+from typing import Optional, Set
 
 import websockets
-from websockets import ConnectionClosedOK, ConnectionClosedError
-
+from websockets import WebSocketServerProtocol
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData.log_uniform import UniformLogger
 
-log = UniformLogger("WS-EMIT")  # leave default: it prints JSON payloads
+log = UniformLogger("WS-HUB")
 
-CONNECT_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1)
-
-_URI: Optional[str] = None
+# === Globals ==============================================================
 _loop: Optional[asyncio.AbstractEventLoop] = None
 _thread: Optional[threading.Thread] = None
-_queue: Optional[asyncio.Queue] = None
 _stop_evt = threading.Event()
 
-_is_connected = False
-_wait_logged = False
+_clients: Set[WebSocketServerProtocol] = set()
+_queue: Optional[asyncio.Queue] = None
+
+_HOST = "127.0.0.1"
+_PORT = 8765
+SERVE_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1, max_size=None)
 
 
-async def _sender(ws, queue: asyncio.Queue):
-    """Send loop. On any send error, exit to trigger reconnect."""
+# === Internals ============================================================
+async def _broadcast_worker():
+    """Takes dict or list payloads and broadcasts JSON to all clients."""
+    assert _queue is not None
     while not _stop_evt.is_set():
-        item = await queue.get()
+        item = await _queue.get()
         if item is None:
             break
 
         items = item if isinstance(item, list) else [item]
         for elem in items:
-            try:
-                wire = json.dumps(elem)
-                await ws.send(wire)
-                log.sent_wire(wire)   # 👈 back to JSON dump style
-            except (ConnectionClosedOK, ConnectionClosedError, OSError, ConnectionResetError) as e:
-                code = getattr(e, 'code', '?')
-                reason = getattr(e, 'reason', str(e))
-                log.disconnected(code, reason)
-                return
-            except Exception as e:
-                log.disconnected("?", f"send failed: {e}")
-                return
+            wire = json.dumps(elem)
+            # log once (ugly JSON, like you prefer)
+            log.sent_wire(wire)
+
+            dead = []
+            for ws in list(_clients):
+                try:
+                    await ws.send(wire)
+                except Exception:
+                    dead.append(ws)
+            for ws in dead:
+                _clients.discard(ws)
 
 
-async def _receiver(ws):
-    """Recv loop. On any disconnect, just return (no raise)."""
+async def _handler(ws: WebSocketServerProtocol):
+    """Accept connections. We ignore inbound messages (this is a pure broadcast hub)."""
+    _clients.add(ws)
+    log.connected(); log.ready()
     try:
-        async for msg in ws:
-            log.got_reply(msg)
-    except (ConnectionClosedOK, ConnectionClosedError, OSError, ConnectionResetError) as e:
-        code = getattr(e, 'code', '?')
-        reason = getattr(e, 'reason', str(e))
-        log.disconnected(code, reason)
-        return
+        async for _ in ws:
+            # Ignore any inbound chatter from clients
+            pass
     except Exception as e:
-        log.disconnected("?", f"recv failed: {e}")
-        return
+        log.disconnected("?", str(e))
+    finally:
+        _clients.discard(ws)
+        log.waiting()
 
 
-async def _session(uri: str):
-    global _is_connected, _queue, _wait_logged
-
-    async with websockets.connect(uri, **CONNECT_KW) as ws:
-        _is_connected = True
-        _wait_logged = False
-        log.connected()
-        log.ready()
-
-        q = asyncio.Queue()
-        _queue = q
-
-        send_task = asyncio.create_task(_sender(ws, q))
-        recv_task = asyncio.create_task(_receiver(ws))
-        try:
-            await asyncio.wait({send_task, recv_task}, return_when=asyncio.FIRST_COMPLETED)
-        finally:
-            for t in (send_task, recv_task):
-                if t and not t.done():
-                    t.cancel()
-                    with suppress(asyncio.CancelledError):
-                        await t
-
-            _queue = None
-            try:
-                while not q.empty():
-                    q.get_nowait()
-            except Exception:
-                pass
-            _is_connected = False
-
-
-async def _run(uri: str):
-    global _wait_logged
+async def _run_server():
+    global _queue
     log.starting()
-    backoff = 1
-
-    while not _stop_evt.is_set():
-        if not _wait_logged:
-            log.waiting()
-            _wait_logged = True
-
+    _queue = asyncio.Queue(maxsize=1000)
+    async with websockets.serve(_handler, _HOST, _PORT, **SERVE_KW):
+        log.waiting()
+        broadcaster = asyncio.create_task(_broadcast_worker())
         try:
-            await _session(uri)
-        except Exception:
-            pass
-
-        await asyncio.sleep(backoff)
-        backoff = min(backoff * 2, 10)
-
-    if _queue is not None:
-        try:
-            await _queue.put(None)
-        except Exception:
-            pass
+            await asyncio.Future()  # run forever
+        finally:
+            if not broadcaster.done():
+                broadcaster.cancel()
+                with suppress(asyncio.CancelledError):
+                    await broadcaster
 
 
-def start(uri: str):
-    global _URI, _loop, _thread
+def start_server(host: str = "127.0.0.1", port: int = 8765):
+    """Start the hub server (idempotent)."""
+    global _HOST, _PORT, _thread, _loop
     if _thread and _thread.is_alive():
         return
-    _URI = uri
+    _HOST, _PORT = host, port
     _stop_evt.clear()
 
     def _thread_target():
@@ -131,23 +93,32 @@ def start(uri: str):
         _loop = asyncio.new_event_loop()
         asyncio.set_event_loop(_loop)
         try:
-            _loop.run_until_complete(_run(_URI))
+            _loop.run_until_complete(_run_server())
         finally:
             _loop.run_until_complete(_loop.shutdown_asyncgens())
             _loop.close()
 
-    _thread = threading.Thread(target=_thread_target, name="ws-emit-bridge", daemon=True)
+    _thread = threading.Thread(target=_thread_target, name="ws-hub", daemon=True)
     _thread.start()
 
 
 def send(payload):
-    """Enqueue payload (dict OR list). Dropped if not connected."""
-    if not _is_connected or _loop is None or _queue is None:
+    """Enqueue payload (dict OR list) for broadcast to all connected clients."""
+    if _loop is None or _queue is None:
         return
-    _loop.call_soon_threadsafe(_queue.put_nowait, payload)
+
+    def _try_put():
+        try:
+            _queue.put_nowait(payload)
+        except asyncio.QueueFull:
+            # drop newest
+            pass
+
+    _loop.call_soon_threadsafe(_try_put)
 
 
 def stop():
+    """Stop the hub server."""
     global _thread
     if not _thread:
         return
