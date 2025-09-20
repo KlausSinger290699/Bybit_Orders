@@ -1,4 +1,5 @@
-﻿import asyncio
+﻿# ws_receiver_bridge.py
+import asyncio
 import json
 import traceback
 import websockets
@@ -64,4 +65,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
+        log.closing_by_user()
         log.stopped_by_user()
