@@ -27,13 +27,19 @@ _HOST = "127.0.0.1"
 _PORT = 8765
 SERVE_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1, max_size=None)
 
-# Logging toggle
-_LOGS_ENABLED = True
-_waiting_logged = False  # only print "Waiting ..." once per idle stretch
+# Logging toggles (default silent)
+_LOGS_ENABLED = False         # master toggle (all logs in this module, except "Sent (json)")
+_LOG_WIRE = False             # ONLY controls 📤 "Sent (json)" lines
+_waiting_logged = False       # only print "Waiting ..." once per idle stretch
 
 def _log(method: str, *args):
     if _LOGS_ENABLED:
         getattr(log, method)(*args)
+
+def _log_sent_wire(wire: str):
+    # Only this line respects _LOG_WIRE; everything else follows _LOGS_ENABLED.
+    if _LOG_WIRE:
+        log.sent_wire(wire)
 
 def _peer(ws: WebSocketServerProtocol) -> str:
     ra = getattr(ws, "remote_address", None)
@@ -54,7 +60,7 @@ async def _broadcast_worker():
         items = item if isinstance(item, list) else [item]
         for elem in items:
             wire = json.dumps(elem)
-            _log("sent_wire", wire)  # 📤 [WS-HUB] Sent (json)   : {...}
+            _log_sent_wire(wire)  # 📤 [WS-HUB] Sent (json)   : {...}
 
             dead = []
             for ws in list(_clients):
@@ -146,13 +152,37 @@ async def _run_server():
                     await broadcaster
 
 # === Public API ==========================================================
-def start_server(host: str = "127.0.0.1", port: int = 8765, *, logs: bool = True):
-    """Start the hub server (idempotent). Pass logs=False to silence all output."""
-    global _HOST, _PORT, _thread, _loop, _LOGS_ENABLED
+def start_server(
+    host: str = "127.0.0.1",
+    port: int = 8765,
+    *,
+    noisylogs: bool = False,   # everything (incl. Sent json)
+    logs: bool = False         # without Sent json
+):
+    """Start the hub server (idempotent).
+    Args:
+        host / port: bind address
+        noisylogs: print EVERYTHING (overrides 'logs')
+        logs: print all EXCEPT '📤 Sent (json)' lines
+        If both False → print nothing.
+        If both True  → print everything.
+    """
+    global _HOST, _PORT, _thread, _loop, _LOGS_ENABLED, _LOG_WIRE
     if _thread and _thread.is_alive():
         return
     _HOST, _PORT = host, port
-    _LOGS_ENABLED = logs
+
+    # precedence: noisylogs True → everything
+    if noisylogs:
+        _LOGS_ENABLED = True
+        _LOG_WIRE = True
+    elif logs:
+        _LOGS_ENABLED = True
+        _LOG_WIRE = False
+    else:
+        _LOGS_ENABLED = False
+        _LOG_WIRE = False
+
     _stop_evt.clear()
 
     def _thread_target():
