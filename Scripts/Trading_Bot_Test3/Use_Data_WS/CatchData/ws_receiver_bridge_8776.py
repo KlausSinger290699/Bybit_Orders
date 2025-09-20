@@ -1,12 +1,38 @@
 ﻿# ws_receiver_bridge_8765.py — receiver CLIENT that waits & retries; prints summaries; ACKs each msg
 import asyncio
 import json
+import threading
+from contextlib import suppress
+from typing import Optional
+
 import websockets
 from websockets import ConnectionClosedOK, ConnectionClosedError
 
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData.log_uniform import UniformLogger
 
+# Logger (actual printing is gated by the toggles below)
 log = UniformLogger("WS-RECV", show_wire=False, show_raw=False)
+
+# === Globals ==============================================================
+_loop: Optional[asyncio.AbstractEventLoop] = None
+_thread: Optional[threading.Thread] = None
+_stop_evt = threading.Event()
+
+_URI = "ws://127.0.0.1:8765"
+
+# Logging toggles (default silent, like hub now)
+_LOGS_ENABLED = False   # general logs: starting, waiting, connected, ready, summaries, disconnect
+_LOG_WIRE = False       # ONLY the "sent back (json)" ACK lines
+
+def _log(method: str, *args):
+    if _LOGS_ENABLED:
+        getattr(log, method)(*args)
+
+def _log_sent_json(payload: str):
+    if _LOG_WIRE:
+        log.sent_json(payload)
+
+# === Helpers ==============================================================
 
 def _maybe_pivots(d: dict) -> dict:
     """Accept both flat keys and nested under 'pivots'."""
@@ -26,26 +52,32 @@ def summarize_bridge_payload(d: dict) -> str:
 
 async def _recv_loop(ws):
     async for msg in ws:
+        # Parse payload
         try:
             payload = json.loads(msg)
         except json.JSONDecodeError:
-            print(f"📥 [WS-RECV] Raw: {msg}")
+            if _LOGS_ENABLED:
+                print(f"📥 [WS-RECV] Raw: {msg}")
             continue
 
+        # Single object
         if isinstance(payload, dict):
             side = payload.get("side", "-")
             tf = payload.get("tf_sec", "-")
             status = payload.get("status", "-")
-            log.recv_summary(side, str(tf), status)
-            print(f"    → {summarize_bridge_payload(payload)}")
+            _log("recv_summary", side, str(tf), status)
+            if _LOGS_ENABLED:
+                print(f"    → {summarize_bridge_payload(payload)}")
             ack = json.dumps({
                 "ok": True, "message": "receiver ack",
                 "tradable": bool(payload.get("Tradable", False)),
                 "sl": payload.get("SL")
             })
             await ws.send(ack)
+            _log_sent_json(ack)
             continue
 
+        # Array of objects
         if isinstance(payload, list):
             for obj in payload:
                 if not isinstance(obj, dict):
@@ -53,29 +85,54 @@ async def _recv_loop(ws):
                 side = obj.get("side", "-")
                 tf = obj.get("tf_sec", "-")
                 status = obj.get("status", "-")
-                log.recv_summary(side, str(tf), status)
-                print(f"    → {summarize_bridge_payload(obj)}")
+                _log("recv_summary", side, str(tf), status)
+                if _LOGS_ENABLED:
+                    print(f"    → {summarize_bridge_payload(obj)}")
                 ack = json.dumps({
                     "ok": True, "message": "receiver ack",
                     "tradable": bool(obj.get("Tradable", False)),
                     "sl": obj.get("SL")
                 })
                 await ws.send(ack)
+                _log_sent_json(ack)
             continue
 
-        print(f"📥 [WS-RECV] Unsupported shape: {type(payload)}")
+        if _LOGS_ENABLED:
+            print(f"📥 [WS-RECV] Unsupported shape: {type(payload)}")
 
-async def run(uri: str = "ws://127.0.0.1:8765"):
-    log.starting()
+# === Main connect loop =====================================================
+
+async def run(uri: str = "ws://127.0.0.1:8765", *, noisylogs: bool = False, logs: bool = False):
+    """
+    Standalone entry (awaitable). Use from __main__ or call via asyncio.
+    noisylogs=True  -> print EVERYTHING (incl. 'Sent back (json)')
+    logs=True       -> print all EXCEPT 'Sent back (json)'
+    both False      -> silent
+    both True       -> everything
+    """
+    global _LOGS_ENABLED, _LOG_WIRE
+
+    # Set toggles per call
+    if noisylogs:
+        _LOGS_ENABLED = True
+        _LOG_WIRE = True
+    elif logs:
+        _LOGS_ENABLED = True
+        _LOG_WIRE = False
+    else:
+        _LOGS_ENABLED = False
+        _LOG_WIRE = False
+
+    _log("starting")
     backoff = 1
     waiting_logged = False            # print "Waiting ..." once per offline stretch
     had_connected = False             # true after first successful connect
     disc_logged_this_offline = False  # single "Disconnected ..." per offline stretch
 
-    while True:
+    while not _stop_evt.is_set():
         try:
             if not waiting_logged:
-                log.waiting()
+                _log("waiting")
                 waiting_logged = True
 
             async with websockets.connect(
@@ -86,39 +143,98 @@ async def run(uri: str = "ws://127.0.0.1:8765"):
                 waiting_logged = False
                 disc_logged_this_offline = False
                 had_connected = True
-                log.connected()
-                log.ready()
-                print()
+                _log("connected")
+                _log("ready")
+                if _LOGS_ENABLED:
+                    print()
                 await _recv_loop(ws)
 
         except ConnectionClosedOK as e:
             if had_connected and not disc_logged_this_offline:
-                log.disconnected(e.code, e.reason)
+                _log("disconnected", e.code, e.reason)
                 disc_logged_this_offline = True
         except ConnectionClosedError as e:
             if had_connected and not disc_logged_this_offline:
-                log.disconnected(e.code, e.reason)
+                _log("disconnected", e.code, e.reason)
                 disc_logged_this_offline = True
         except OSError as e:
             if had_connected and not disc_logged_this_offline:
-                log.disconnected("?", str(e))
+                _log("disconnected", "?", str(e))
                 disc_logged_this_offline = True
         except Exception as e:
             if had_connected and not disc_logged_this_offline:
-                log.disconnected("?", str(e))
+                _log("disconnected", "?", str(e))
                 disc_logged_this_offline = True
 
         # offline; print "Waiting ..." once per stretch
+        if _stop_evt.is_set():
+            break
         if not waiting_logged:
-            log.waiting()
+            _log("waiting")
             waiting_logged = True
 
         await asyncio.sleep(backoff)
         backoff = min(backoff * 2, 10)
 
+# === Threaded API for main.py =============================================
+
+def _thread_target():
+    global _loop
+    _loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(_loop)
+    try:
+        _loop.run_until_complete(run(_URI, noisylogs=_LOG_WIRE and _LOGS_ENABLED,
+                                     logs=(not _LOG_WIRE) and _LOGS_ENABLED))
+    finally:
+        _loop.run_until_complete(_loop.shutdown_asyncgens())
+        _loop.close()
+
+def start_client(uri: str = "ws://127.0.0.1:8765", *, noisylogs: bool = False, logs: bool = False):
+    """
+    Start receiver in a background thread (idempotent).
+    noisylogs=True  -> print EVERYTHING (incl. 'Sent back (json)')
+    logs=True       -> print all EXCEPT 'Sent back (json)'
+    """
+    global _thread, _URI, _LOGS_ENABLED, _LOG_WIRE
+    if _thread and _thread.is_alive():
+        return
+    _URI = uri
+
+    # same precedence as hub
+    if noisylogs:
+        _LOGS_ENABLED = True
+        _LOG_WIRE = True
+    elif logs:
+        _LOGS_ENABLED = True
+        _LOG_WIRE = False
+    else:
+        _LOGS_ENABLED = False
+        _LOG_WIRE = False
+
+    _stop_evt.clear()
+    _thread = threading.Thread(target=_thread_target, name="ws-recv", daemon=True)
+    _thread.start()
+
+def stop_client():
+    """Stop the background receiver gracefully (idempotent)."""
+    global _thread
+    if not _thread:
+        return
+    _stop_evt.set()
+    # wake sleeps sooner
+    if _loop and _loop.is_running():
+        try:
+            _loop.call_soon_threadsafe(lambda: None)
+        except Exception:
+            pass
+    _thread.join(timeout=3)
+    _thread = None
+
+# === CLI / standalone ======================================================
 if __name__ == "__main__":
     try:
-        asyncio.run(run())
+        # Standalone defaults: silent (like hub’s default)
+        asyncio.run(run(_URI, noisylogs=True, logs=True))
     except KeyboardInterrupt:
-        log.closing_by_user()
-        log.stopped_by_user()
+        _log("closing_by_user")
+        _log("stopped_by_user")

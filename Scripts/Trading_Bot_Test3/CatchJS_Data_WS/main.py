@@ -5,7 +5,7 @@ from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData import ws_emit_bridge
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.z_Helpers import printer
 import atexit
 
-ws_emit_bridge.start_server("127.0.0.1", 8765, logs=True)
+ws_emit_bridge.start_server("127.0.0.1", 8765)
 atexit.register(ws_emit_bridge.stop)
 
 for raw_data in playwright_session.iter_blocks():
