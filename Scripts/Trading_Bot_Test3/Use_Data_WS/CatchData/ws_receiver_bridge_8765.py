@@ -2,6 +2,7 @@
 import asyncio
 import json
 import websockets
+from websockets import ConnectionClosedOK, ConnectionClosedError
 
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData.log_uniform import UniformLogger
 
@@ -67,32 +68,54 @@ async def _recv_loop(ws):
 async def run(uri: str = "ws://127.0.0.1:8765"):
     log.starting()
     backoff = 1
-    printed_wait = False
+    waiting_logged = False          # print "Waiting ..." once per offline stretch
+    had_connected = False           # true after first successful connect
+    disc_logged_this_offline = False  # log one "Disconnected ..." per offline stretch
 
     while True:
         try:
-            if not printed_wait:
+            if not waiting_logged:
                 log.waiting()
-                printed_wait = True
+                waiting_logged = True
 
             async with websockets.connect(
                 uri, ping_interval=20, ping_timeout=20, close_timeout=1, max_size=None
             ) as ws:
+                # online
                 backoff = 1
-                printed_wait = False
+                waiting_logged = False
+                disc_logged_this_offline = False
+                had_connected = True
                 log.connected()
                 log.ready()
                 print()
                 await _recv_loop(ws)
 
-        except KeyboardInterrupt:
-            log.closing_by_user()
-            log.stopped_by_user()
-            return
-        except Exception:
-            # hub not up or got disconnected -> wait & retry (no traceback)
-            await asyncio.sleep(backoff)
-            backoff = min(backoff * 2, 10)
+        except ConnectionClosedOK as e:
+            if had_connected and not disc_logged_this_offline:
+                log.disconnected(e.code, e.reason)
+                disc_logged_this_offline = True
+        except ConnectionClosedError as e:
+            if had_connected and not disc_logged_this_offline:
+                log.disconnected(e.code, e.reason)
+                disc_logged_this_offline = True
+        except OSError as e:
+            # connection refused etc. → only log once after a real disconnect
+            if had_connected and not disc_logged_this_offline:
+                log.disconnected("?", str(e))
+                disc_logged_this_offline = True
+        except Exception as e:
+            if had_connected and not disc_logged_this_offline:
+                log.disconnected("?", str(e))
+                disc_logged_this_offline = True
+
+        # now offline; print "Waiting ..." once per stretch
+        if not waiting_logged:
+            log.waiting()
+            waiting_logged = True
+
+        await asyncio.sleep(backoff)
+        backoff = min(backoff * 2, 10)
 
 if __name__ == "__main__":
     try:

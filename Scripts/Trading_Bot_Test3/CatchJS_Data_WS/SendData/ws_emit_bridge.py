@@ -7,7 +7,7 @@ from typing import Optional, Set, Dict
 from itertools import count
 
 import websockets
-from websockets import WebSocketServerProtocol
+from websockets import WebSocketServerProtocol, ConnectionClosedOK, ConnectionClosedError
 from Scripts.Trading_Bot_Test3.CatchJS_Data_WS.SendData.log_uniform import UniformLogger
 
 log = UniformLogger("WS-HUB")
@@ -29,6 +29,8 @@ SERVE_KW = dict(ping_interval=20, ping_timeout=20, close_timeout=1, max_size=Non
 
 # Logging toggle
 _LOGS_ENABLED = True
+_waiting_logged = False  # ensure we don't spam "Waiting ..."
+
 def _log(method: str, *args):
     if _LOGS_ENABLED:
         getattr(log, method)(*args)
@@ -69,6 +71,7 @@ async def _broadcast_worker():
 
 async def _handler(ws: WebSocketServerProtocol):
     """Accept connections; read ACKs so we can log them with client IDs."""
+    global _waiting_logged
     cid = f"C{next(_id_counter)}"
     _clients.add(ws)
     _client_ids[ws] = cid
@@ -76,23 +79,45 @@ async def _handler(ws: WebSocketServerProtocol):
     _log("connected")
     _log("ready")
     _print(f"🔗 [{log.role}] Client id={cid} peer={_peer(ws)}")
+    _waiting_logged = False  # we have at least one client now
 
+    logged_disc = False
     try:
         async for msg in ws:  # receivers send ACKs; include id in log line
             _log("got_reply", f"[{cid}] {msg}")
+    except (ConnectionClosedOK, ConnectionClosedError) as e:
+        _log("disconnected", e.code, f"{e.reason} (id={cid}, peer={_peer(ws)})")
+        logged_disc = True
     except Exception as e:
         _log("disconnected", "?", f"{e} (id={cid}, peer={_peer(ws)})")
+        logged_disc = True
     finally:
+        if not logged_disc:
+            code = getattr(ws, "close_code", None)
+            reason = getattr(ws, "close_reason", None)
+            code_out = code if code is not None else "?"
+            reason_out = (reason if reason else "no close frame received or sent") + f" (id={cid}, peer={_peer(ws)})"
+            _log("disconnected", code_out, reason_out)
+
         _clients.discard(ws)
         _client_ids.pop(ws, None)
-        _log("waiting")
+
+        # Only print "Waiting ..." when the LAST client leaves (no spam)
+        if not _clients and not _waiting_logged:
+            _log("waiting")
+            _waiting_logged = True
 
 async def _run_server():
-    global _queue
+    global _queue, _waiting_logged
     _log("starting")
     _queue = asyncio.Queue(maxsize=1000)
+    _waiting_logged = False
     async with websockets.serve(_handler, _HOST, _PORT, **SERVE_KW):
-        _log("waiting")
+        # at startup, server is waiting for the first client
+        if not _waiting_logged:
+            _log("waiting")
+            _waiting_logged = True
+
         broadcaster = asyncio.create_task(_broadcast_worker())
         try:
             await asyncio.Future()  # run forever
