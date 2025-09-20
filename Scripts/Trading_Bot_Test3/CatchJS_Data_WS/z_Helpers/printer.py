@@ -2,11 +2,8 @@
 import atexit
 from . import utils
 
-EVENTS_PER_SEQUENCE = 4  # adjust to your stream
-
 class _SeqPrinter:
-    def __init__(self, per_sequence: int = EVENTS_PER_SEQUENCE):
-        self.per_sequence = per_sequence
+    def __init__(self ):
         self.seq_id = None
         self.footer = ""
         self.count = 0
@@ -44,17 +41,15 @@ class _SeqPrinter:
             self.count = 0
 
     def _print_batch(self, events: list[dict], tag: str | None = None):
-        """Print a full block at once: header → lines → footer."""
         if not events:
             return
         seq = events[0].get("sequence")
         tf = utils.choose_tf_label(events)
         top, bottom = utils.seq_bars(seq, tf, tag)
         print("\n" + top)
-        for ev in events[:self.per_sequence]:
+        for ev in events:  # ← no slicing; print all events in the block
             print(self._line_for_event(ev))
         print(bottom)
-        # reset internal rolling state
         self.seq_id = None
         self.footer = ""
         self.count = 0
