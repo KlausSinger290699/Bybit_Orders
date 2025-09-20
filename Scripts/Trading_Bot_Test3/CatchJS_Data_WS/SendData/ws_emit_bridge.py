@@ -48,6 +48,7 @@ def _peer(ws: WebSocketServerProtocol) -> str:
 # === Internals ============================================================
 async def _broadcast_worker():
     """Takes dict or list payloads and broadcasts JSON to all clients."""
+    global _waiting_logged
     assert _queue is not None
     while not _stop_evt.is_set():
         item = await _queue.get()
@@ -64,10 +65,21 @@ async def _broadcast_worker():
                 try:
                     await ws.send(wire)
                 except Exception:
+                    # Log a proper disconnect here too, with id + peer.
+                    cid = _client_ids.get(ws, "<unknown>")
+                    _log("disconnected", "?", f"send failed (id={cid}, peer={_peer(ws)})")
                     dead.append(ws)
+
+            # prune dead clients
             for ws in dead:
                 _clients.discard(ws)
                 _client_ids.pop(ws, None)
+
+            # If that was the last client, show one "Waiting ..."
+            if not _clients and not _waiting_logged:
+                _log("waiting")
+                _waiting_logged = True
+
 
 async def _handler(ws: WebSocketServerProtocol):
     """Accept connections; read ACKs so we can log them with client IDs."""
@@ -106,6 +118,7 @@ async def _handler(ws: WebSocketServerProtocol):
         if not _clients and not _waiting_logged:
             _log("waiting")
             _waiting_logged = True
+
 
 async def _run_server():
     global _queue, _waiting_logged
