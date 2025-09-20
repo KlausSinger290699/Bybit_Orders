@@ -68,9 +68,9 @@ async def _recv_loop(ws):
 async def run(uri: str = "ws://127.0.0.1:8765"):
     log.starting()
     backoff = 1
-    waiting_logged = False          # print "Waiting ..." once per offline stretch
-    had_connected = False           # true after first successful connect
-    disc_logged_this_offline = False  # log one "Disconnected ..." per offline stretch
+    waiting_logged = False            # print "Waiting ..." once per offline stretch
+    had_connected = False             # true after first successful connect
+    disc_logged_this_offline = False  # single "Disconnected ..." per offline stretch
 
     while True:
         try:
@@ -100,7 +100,6 @@ async def run(uri: str = "ws://127.0.0.1:8765"):
                 log.disconnected(e.code, e.reason)
                 disc_logged_this_offline = True
         except OSError as e:
-            # connection refused etc. → only log once after a real disconnect
             if had_connected and not disc_logged_this_offline:
                 log.disconnected("?", str(e))
                 disc_logged_this_offline = True
@@ -109,7 +108,7 @@ async def run(uri: str = "ws://127.0.0.1:8765"):
                 log.disconnected("?", str(e))
                 disc_logged_this_offline = True
 
-        # now offline; print "Waiting ..." once per stretch
+        # offline; print "Waiting ..." once per stretch
         if not waiting_logged:
             log.waiting()
             waiting_logged = True

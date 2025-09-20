@@ -35,10 +35,6 @@ def _log(method: str, *args):
     if _LOGS_ENABLED:
         getattr(log, method)(*args)
 
-def _print(text: str):
-    if _LOGS_ENABLED:
-        print(text)
-
 def _peer(ws: WebSocketServerProtocol) -> str:
     ra = getattr(ws, "remote_address", None)
     if isinstance(ra, (tuple, list)) and len(ra) >= 2:
@@ -76,7 +72,7 @@ async def _broadcast_worker():
                     _client_ids.pop(ws, None)
                 now = len(_clients)
                 if now > 0 and prev != now:
-                    _print(f"👥 [{log.role}] Clients {prev}→{now}")
+                    log.clients_delta(prev, now)
                 elif now == 0 and not _waiting_logged:
                     _log("waiting")
                     _waiting_logged = True
@@ -94,9 +90,9 @@ async def _handler(ws: WebSocketServerProtocol):
 
     _log("connected")
     _log("ready")
-    _print(f"🔗 [{log.role}] Client id={cid} peer={_peer(ws)}")
+    log.client_link(cid, _peer(ws))
     if prev != now:
-        _print(f"👥 [{log.role}] Clients {prev}→{now}")
+        log.clients_delta(prev, now)
     _waiting_logged = False  # at least one client connected
 
     logged_disc = False
@@ -123,7 +119,7 @@ async def _handler(ws: WebSocketServerProtocol):
         now = len(_clients)
 
         if now > 0 and prev != now:
-            _print(f"👥 [{log.role}] Clients {prev}→{now}")
+            log.clients_delta(prev, now)
         elif now == 0 and not _waiting_logged:
             _log("waiting")
             _waiting_logged = True
