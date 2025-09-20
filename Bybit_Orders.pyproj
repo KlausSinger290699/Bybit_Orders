@@ -40,6 +40,8 @@
     <Compile Include="Scripts\Trading_Bot_Test2\Use_Data_WS\PreProcessData\tradable_data_container.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\z_Helpers\printer.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\Unused\bull_div_reader_sync.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\CatchData\ws_receiver_bridge_8776.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\CatchData\ws_receiver_bridge_8775.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\PreProcessData\strategy_engine.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\z_Helpers\utils.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\main.py" />
@@ -49,7 +51,7 @@
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\Unused\bull_div_subscriber.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\CatchJS_Data_WS\SendData\ws_emit_bridge.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\CatchData\log_uniform.py" />
-    <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\CatchData\ws_receiver_bridge.py" />
+    <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\CatchData\ws_receiver_bridge_8765.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\main.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\PreProcessData\is_tradable_data.py" />
     <Compile Include="Scripts\Trading_Bot_Test3\Use_Data_WS\PreProcessData\tradable_data_container.py" />
